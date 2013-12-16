@@ -126,14 +126,20 @@ class TEC_iCal_Parser {
 					'EventShowInCalendar'  => 1
 				);
 
-				// whole day event?
-				if ( $event->isWholeDay() ) {
-					$args['EventAllDay'] = 1;
-				}
-
 				// convert unix date to proper date with timezone factored in
 				$startdate = self::convert_unix_timestamp_to_date( $event->getProperty( 'start' ), $gmt_offset );
-				$enddate   = self::convert_unix_timestamp_to_date( $event->getProperty( 'end' ),   $gmt_offset );
+
+				// whole day event?
+				if ( $event->isWholeDay() ) {
+					$args['EventAllDay'] = 'yes';
+
+					// for whole day events, iCal spec adds a day, but for The Events Calendar,
+					// we need the enddate to be the same as the startdate
+					$enddate = $startdate;
+
+				} else {
+					$enddate = self::convert_unix_timestamp_to_date( $event->getProperty( 'end' ), $gmt_offset );
+				}
 
 				// save event date / time
 				$args['EventStartDate']   = TribeDateUtils::dateOnly( $startdate );
