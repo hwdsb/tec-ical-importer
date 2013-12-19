@@ -89,6 +89,12 @@ class TEC_iCal_Admin {
 			foreach ( $untested_icals as $key => $untested_ical ) {
 				// iCalendar link
 				if ( ! empty( $untested_ical['link'] ) ) {
+					// google calendars need to switch to https
+					// in order for the ical_exists() check to work properly
+					if( strpos( $untested_ical['link'] , 'google.com/calendar' ) !== false ) {
+						$untested_ical['link'] = $input['icals'][$key]['link'] = str_replace( 'http:', 'https:', $untested_ical['link'] );
+					}
+
 					// iCalendar does not exist
 					if ( ! $this->ical_exists( $untested_ical['link'] ) ) {
 						$messages["ical_error_{$key}"] = sprintf( __( '<strong>Error:</strong> Link for iCalendar #%d - "%s" - is invalid.  Please check the URL and make sure it is pointing to a valid iCalendar file.', 'tec-ical' ), $key + 1, esc_url( $untested_ical['link'] ) );
