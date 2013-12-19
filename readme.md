@@ -1,4 +1,4 @@
-The Event Calendar - iCalendar Importer
+The Events Calendar - iCalendar Importer
 =======================================
 
 This plugin allows site administrators to enter remotely-located iCalendar files to be synched and imported into [The Events Calendar](http://wordpress.org/plugins/the-events-calendar/) plugin for [WordPress](http://wordpress.org).
@@ -14,7 +14,13 @@ How to use?
 * Lastly, you can immediately test the import by checking the "Manual Sync" checkbox.
 * Hit "Save changes" and that should be it!
 
+Thanks
+-
+* SG-iCalendar - A simple and fast iCal parser.  Currently using [lipemat's fork](https://github.com/lipemat/SG-iCalendar).  Original is by [fangal](https://github.com/fangel/SG-iCalendar).  Licensed under the [Creative Commons Attribution-ShareAlike 2.5 (Denmark)](https://creativecommons.org/licenses/by-sa/2.5/dk/deed.en).
+
 
 License
 -
-GPLv2 or later.
+[Creative Commons Attribution-ShareAlike 2.5 (Denmark)](https://creativecommons.org/licenses/by-sa/2.5/dk/deed.en).
+
+<sub>*Since SG-iCalendar's license is CC BY-SA, this plugin must also follow this license.  Therefore, this plugin is [incompatible with the GPL](https://www.gnu.org/licenses/license-list.html#ccbysa).</sub>
