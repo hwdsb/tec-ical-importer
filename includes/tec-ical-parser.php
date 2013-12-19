@@ -126,17 +126,19 @@ class TEC_iCal_Parser {
 					'EventShowInCalendar'  => 1
 				);
 
-				// convert unix date to proper date with timezone factored in
-				$startdate = self::convert_unix_timestamp_to_date( $event->getProperty( 'start' ), $gmt_offset );
-
 				// whole day event?
 				if ( $event->isWholeDay() ) {
 					$args['EventAllDay'] = 'yes';
+					$gmt_offset = 0;
+				}
 
-					// for whole day events, iCal spec adds a day, but for The Events Calendar,
-					// we need the enddate to be the same as the startdate
+				// convert unix date to proper date with timezone factored in
+				$startdate = self::convert_unix_timestamp_to_date( $event->getProperty( 'start' ), $gmt_offset );
+
+				// for whole day events, iCal spec adds a day, but for The Events Calendar,
+				// we need the enddate to be the same as the startdate
+				if ( $event->isWholeDay() ) {
 					$enddate = $startdate;
-
 				} else {
 					$enddate = self::convert_unix_timestamp_to_date( $event->getProperty( 'end' ), $gmt_offset );
 				}

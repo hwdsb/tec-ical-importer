@@ -136,7 +136,9 @@ class TEC_iCal_Admin {
 			$messages['parsed_results'] = '<strong>' . __( 'iCalendars successfully parsed', 'tec-ical' ) . '</strong></p><p>';
 
 			foreach ( $counts as $i => $count ) {
-				$messages['parsed_results'] .= '&bull; <strong>' . sprintf( __( 'iCalendar #%d', 'tec-ical' ), $i + 1 ) . '</strong>: ';
+				if ( ! empty( $count['added'] ) || ! empty( $count['updated'] ) ) {
+					$messages['parsed_results'] .= '&bull; <strong>' . sprintf( __( 'iCalendar #%d', 'tec-ical' ), $i + 1 ) . '</strong>: ';
+				}
 
 				if ( ! empty( $count['added'] ) ) {
 					$messages['parsed_results'] .= sprintf( __( '%d events added', 'tec-ical' ), $count['added'] );
@@ -150,7 +152,9 @@ class TEC_iCal_Admin {
 					$messages['parsed_results'] .= sprintf( __( '%d events updated', 'tec-ical' ), $count['updated'] );
 				}
 
-				$messages['parsed_results'] .= '.<br />';
+				if ( ! empty( $count['added'] ) || ! empty( $count['updated'] ) ) {
+					$messages['parsed_results'] .= '.<br />';
+				}
 			}
 		}
 
@@ -417,7 +421,7 @@ class TEC_iCal_Admin {
 
 		foreach( $array1 as $key => $value ) {
 			if( is_array($value) ) {
-				if( ! isset( $array2[$key] ) || !is_array( $array2[$key] ) ) {
+				if( ! isset( $array2[$key] ) || ! is_array( $array2[$key] ) ) {
 					$difference[$key] = $value;
 				} else {
 					$new_diff = $this->array_diff_assoc_recursive( $value, $array2[$key] );
