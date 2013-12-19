@@ -141,7 +141,7 @@ class TEC_iCal_Admin {
 				}
 
 				if ( ! empty( $count['added'] ) ) {
-					$messages['parsed_results'] .= sprintf( __( '%d events added', 'tec-ical' ), $count['added'] );
+					$messages['parsed_results'] .= sprintf( _n( '1 event added', '%d events added', $count['added'], 'tec-ical' ), $count['added'] );
 				}
 
 				if ( ! empty( $count['added'] ) && ! empty( $count['updated'] ) ) {
@@ -149,7 +149,7 @@ class TEC_iCal_Admin {
 				}
 
 				if ( ! empty( $count['updated'] ) ) {
-					$messages['parsed_results'] .= sprintf( __( '%d events updated', 'tec-ical' ), $count['updated'] );
+					$messages['parsed_results'] .= sprintf( _n( '1 event updated', '%d events updated', $count['updated'], 'tec-ical' ), $count['updated'] );
 				}
 
 				if ( ! empty( $count['added'] ) || ! empty( $count['updated'] ) ) {
