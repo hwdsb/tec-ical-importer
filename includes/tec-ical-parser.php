@@ -67,6 +67,11 @@ class TEC_iCal_Parser {
 		// get gmt offset
 		$gmt_offset = get_option( 'gmt_offset' );
 
+		// If safe mode isn't on, then let's set the execution time to unlimited
+		if ( ! ini_get( 'safe_mode' ) ) {
+			set_time_limit( 0 );
+		}
+
 		// parse saved iCalendar data
 		foreach( $icals as $key => $ical ) {
 			// sanity check!
