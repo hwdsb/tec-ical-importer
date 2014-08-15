@@ -122,6 +122,7 @@ class TEC_iCal_Parser {
 					'post_content'  => $event->getProperty( 'description' ),
 					'ical_uid'      => $event->getProperty( 'uid' ),
 				        'ical_sequence' => $event->getProperty( 'sequence' ),
+				        'ical_link'     => $ical['link'],
 
 					// saving for posterity's sake; these are unix timestamps
 				        'ical_start_timestamp' => $event->getProperty( 'start' ),
@@ -303,6 +304,7 @@ $recurrenceData['custom-year-month-day'];
 			return;
 		}
 
+		update_post_meta( $post_id, '_tec_ical_link',            $data['ical_link'] );
 		update_post_meta( $post_id, '_tec_ical_uid',             $data['ical_uid'] );
 		update_post_meta( $post_id, '_tec_ical_sequence',        $data['ical_sequence'] );
 		update_post_meta( $post_id, '_tec_ical_start_timestamp', $data['ical_start_timestamp'] );
