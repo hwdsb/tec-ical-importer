@@ -85,6 +85,8 @@ class TEC_iCal_Parser {
 			$updated_count = 0;
 			$added_count   = 0;
 
+			$uids = array();
+
 			// parse each iCalendar event
 			foreach ( $parser->getEvents() as $event ) {
 
@@ -114,6 +116,9 @@ class TEC_iCal_Parser {
 
 				        )
 				*/
+
+				// record the UID for later use
+				$uids[] = $event->getProperty( 'uid' );
 
 				// setup default args
 				$args = array(
@@ -271,6 +276,16 @@ $recurrenceData['custom-year-month-day'];
 
 			}
 
+			// check if any events have been deleted
+			$deleted_event_ids = $this->get_deleted_event_ids_for_ical( $ical['link'], $uids );
+
+			// delete events that have been removed from the iCal
+			if ( ! empty( $deleted_event_ids ) ) {
+				foreach( $deleted_event_ids as $event_id ) {
+					tribe_delete_event( $event_id, true );
+				}
+			}
+
 			// update counts
 			$this->counts[$key]['updated'] = $updated_count;
 			$this->counts[$key]['added']   = $added_count;
@@ -291,6 +306,45 @@ $recurrenceData['custom-year-month-day'];
 	 */
 	public function get_counts() {
 		return $this->counts;
+	}
+
+	/**
+	 * Get the deleted event post IDs for an iCalendar.
+	 *
+	 * When we check the iCal file during sync, we have to check the current UIDs
+	 * in the iCal file against the UIDs that are in the database.  Then, we can
+	 * determine if there are any events that should be marked for deletion.
+	 *
+	 * @param string $ical The iCal link used to import the events.
+	 * @param array $current_uids The current UIDs from the current iCal
+	 * @return array Array of post IDs that should be deleted.
+	 */
+	public function get_deleted_event_ids_for_ical( $ical = '', $current_uids = array() ) {
+		global $wpdb;
+
+		$parsed_uids = array();
+		foreach( $current_uids as $uid ) {
+			$parsed_uids[] = $wpdb->prepare( '%s', $uid );
+		}
+
+		$parsed_uids = implode( ',', $parsed_uids );
+
+		if ( ! empty( $parsed_uids ) ) {
+			$not_in_sql = " AND mv2.meta_value NOT IN ( {$parsed_uids} )";
+		} else {
+			$not_in_sql = '';
+		}
+
+		$query = $wpdb->get_col( "
+			SELECT mv2.post_id
+				FROM {$wpdb->postmeta} mv1
+				INNER JOIN {$wpdb->postmeta} mv2
+			WHERE ( mv2.meta_key = '_tec_ical_uid'{$not_in_sql} ) AND
+				( mv1.meta_value = '{$ical}' AND mv1.meta_key = '_tec_ical_link' ) AND
+				mv1.post_id = mv2.post_id
+		" );
+
+		return $query;
 	}
 
 	/**
