@@ -343,7 +343,7 @@ class TEC_iCal_Admin {
 				$value = $this->get_option( $r['name'], false );
 
 			?>
-				<input class="<?php echo $r['size']; ?>-text" value="<?php echo $r['value']; ?>" name="<?php $this->field( $r['name'] ) ?>" id="<?php $this->field( $r['name'], true ) ?>" type="<?php echo $r['type']; ?>" />
+				<input class="<?php echo $r['size']; ?>-text" value="<?php echo $value; ?>" name="<?php $this->field( $r['name'] ) ?>" id="<?php $this->field( $r['name'], true ) ?>" type="<?php echo $r['type']; ?>" />
 			<?php
 				if ( $r['desc'] ) {
 					echo '<p class="description">' . $r['desc'] . '</p>';
