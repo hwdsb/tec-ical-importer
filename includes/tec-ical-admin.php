@@ -121,6 +121,14 @@ class TEC_iCal_Admin {
 			unset( $input['custom-cron-interval'] );
 
 			$messages['cron_error'] = __( 'Error: Custom interval must be numeric.', 'tec-ical' );
+
+		// custom cron interval is valid and different than saved version
+		// reschedule event with new cron interval
+		} elseif ( $this->settings['custom-cron-interval'] != $input['custom-cron-interval'] ) {
+			$scheduled = wp_next_scheduled( 'tec_ical_schedule' );
+			if ( $scheduled ) {
+				wp_unschedule_event( $scheduled, 'tec_ical_schedule' );
+			}
 		}
 
 		// sync icalendars manually
@@ -341,6 +349,10 @@ class TEC_iCal_Admin {
 
 			case 'text' :
 				$value = $this->get_option( $r['name'], false );
+
+				if ( empty( $value ) ) {
+					$value = $r['value'];
+				}
 
 			?>
 				<input class="<?php echo $r['size']; ?>-text" value="<?php echo $value; ?>" name="<?php $this->field( $r['name'] ) ?>" id="<?php $this->field( $r['name'], true ) ?>" type="<?php echo $r['type']; ?>" />

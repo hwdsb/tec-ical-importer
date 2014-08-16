@@ -76,7 +76,7 @@ class TEC_iCal {
 		$this->setup_properties();
 
 		// setup cron
-		add_action( 'init', array( $this, 'setup_cron' ) );
+		add_action( 'init', array( $this, 'setup_cron' ), 0  );
 
 		// Set up admin area if in the WP dashboard
 		if ( is_admin() && ! defined( 'DOING_AJAX' ) ) {
