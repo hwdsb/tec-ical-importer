@@ -104,10 +104,6 @@ class SG_iCal_VEvent {
 				//if count is set, then figure out the last occurrence and set that as the end date
 				$this->getFrequency();
 				$until = $this->freq->lastOccurrence($this->start);
-			} else {
-				//forever... limit to 3 years
-				$this->recurrence->setUntil('+3 years');
-				$until = $this->recurrence->getUntil();
 			}
 			//date_default_timezone_set( xx ) needed ?;
 			$this->laststart = strtotime($until);
