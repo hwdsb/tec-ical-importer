@@ -89,33 +89,219 @@ class TEC_iCal_Parser {
 
 			// parse each iCalendar event
 			foreach ( $parser->getEvents() as $event ) {
+/* Sample event data
+SG_iCal_VEvent Object
+(
+    [uid:protected] => t7m727q9g0gkqtp7md1jh58g2g@google.com
+    [start:protected] => 1408645800
+    [end:protected] => 1408649400
+    [summary:protected] => Recurring Event
+    [description:protected] => Recurring every Thursday.
+    [location:protected] =>
+    [laststart:protected] => 1502994991
+    [lastend:protected] => 1502998591
+    [recurrence] => SG_iCal_Recurrence Object
+        (
+            [rrule] => FREQ=WEEKLY;BYDAY=TH
+            [freq:protected] => WEEKLY
+            [until:protected] => 20170817T113631-0700
+            [count:protected] =>
+            [interval:protected] =>
+            [bysecond:protected] =>
+            [byminute:protected] =>
+            [byhour:protected] =>
+            [byday:protected] => Array
+                (
+                    [0] => TH
+                )
 
-				/*
-				    [0] => SG_iCal_VEvent Object
-				        (
-				            [uid:protected] => XXXX
-				            [start:protected] => 1379077500
-				            [end:protected] => 1379077500
-				            [summary:protected] =>
-				            [description:protected] =>
-				            [location:protected] =>
-				            [laststart:protected] =>
-				            [lastend:protected] =>
-				            [recurrence] =>
-				            [recurex] =>
-				            [excluded] =>
-				            [added] =>
-				            [freq] =>
-				            [data] => Array
-				                (
-				                    [dtstamp] => 20131214T045050Z
-				                    [class] => PUBLIC
-				                    [sequence] => 0
-				                    [last-modified] => 20130904T130630Z
-				                )
+            [bymonthday:protected] =>
+            [byyearday:protected] =>
+            [byweekno:protected] =>
+            [bymonth:protected] =>
+            [bysetpos:protected] =>
+            [wkst:protected] =>
+            [listProperties:protected] => Array
+                (
+                    [0] => bysecond
+                    [1] => byminute
+                    [2] => byhour
+                    [3] => byday
+                    [4] => bymonthday
+                    [5] => byyearday
+                    [6] => byweekno
+                    [7] => bymonth
+                    [8] => bysetpos
+                )
 
-				        )
-				*/
+        )
+
+    [recurex] =>
+    [excluded] =>
+    [added] =>
+    [freq] =>
+    [data] => Array
+        (
+            [dtstamp] => 20140817T183555Z
+            [created] => 20140817T183037Z
+            [last-modified] => 20140817T183037Z
+            [sequence] => 0
+            [status] => CONFIRMED
+            [transp] => OPAQUE
+        )
+
+    [previous_tz] => UTC
+    [tzid] => America/Vancouver
+)
+*/
+
+/* EVP's Recurrence admin fields
+<select name="recurrence[type]">
+	<option data-plural="" value="None" >None</option>
+	<option data-single="day" data-plural="days" value="Every Day" >Every Day</option>
+	<option data-single="week" data-plural="weeks" value="Every Week" >Every Week</option>
+	<option data-single="month" data-plural="months" value="Every Month" >Every Month</option>
+	<option data-single="year" data-plural="years" value="Every Year" >Every Year</option>
+	<option data-single="event" data-plural="events" value="Custom" >Custom</option>
+</select>
+
+<select name="recurrence[end-type]">
+	<option value="On" >On</option>
+	<option value="After" >After</option>
+	<option value="Never" >Never</option>
+</select>
+<input autocomplete="off" placeholder="2014-08-17" type="text" class="tribe-datepicker" name="recurrence[end]" id="recurrence_end"  value="2013-12-15" style="display:inline"/>
+
+<input autocomplete="off" type="text" name="recurrence[end-count]" id="recurrence_end_count"  value="1" style='width: 40px;'/>
+
+
+// CUSTOM RECURRENCE - THIS IS THE HARD PART
+
+<select name="recurrence[custom-type]">
+	<option value="Daily" data-plural="Day(s)" data-tablerow="" >Daily</option>
+	<option value="Weekly" data-plural="Week(s) on:" data-tablerow="#custom-recurrence-weeks" >Weekly</option>
+	<option value="Monthly" data-plural="Month(s) on the:" data-tablerow="#custom-recurrence-months" >Monthly</option>
+	<option value="Yearly" data-plural="Year(s) on:" data-tablerow="#custom-recurrence-years" >Yearly</option>
+</select>
+
+Every
+<input type="text" name="recurrence[custom-interval]" value=""/>
+
+
+// Not sure what these do
+<input type="hidden" name="recurrence[custom-type-text]" value=""/>
+<input type="hidden" name="recurrence[occurrence-count-text]" value=""/>
+
+custom-recurrence-weeks
+
+	<label><input type="checkbox" name="recurrence[custom-week-day][]" value="1" /> M</label>
+	<label><input type="checkbox" name="recurrence[custom-week-day][]" value="2" /> Tu</label>
+	<label><input type="checkbox" name="recurrence[custom-week-day][]" value="3" /> W</label>
+	<label><input type="checkbox" name="recurrence[custom-week-day][]" value="4" /> Th</label>
+	<label><input type="checkbox" name="recurrence[custom-week-day][]" value="5" /> F</label>
+	<label><input type="checkbox" name="recurrence[custom-week-day][]" value="6" /> Sa</label>
+	<label><input type="checkbox" name="recurrence[custom-week-day][]" value="7" /> Su</label>
+
+
+custom-recurrence-months
+
+	<select name="recurrence[custom-month-number]">
+		<option value="First"  selected='selected'>First</option>
+		<option value="Second" >Second</option>
+		<option value="Third" >Third</option>
+		<option value="Fourth" >Fourth</option>
+		<option value="Fifth" >Fifth</option>
+		<option value="Last" >Last</option>
+		<option value="" >--</option>
+		<option value="1" >1</option>
+		<option value="2" >2</option>
+		<option value="3" >3</option>
+		<option value="4" >4</option>
+		<option value="5" >5</option>
+		<option value="6" >6</option>
+		<option value="7" >7</option>
+		<option value="8" >8</option>
+		<option value="9" >9</option>
+		<option value="10" >10</option>
+		<option value="11" >11</option>
+		<option value="12" >12</option>
+		<option value="13" >13</option>
+		<option value="14" >14</option>
+		<option value="15" >15</option>
+		<option value="16" >16</option>
+		<option value="17" >17</option>
+		<option value="18" >18</option>
+		<option value="19" >19</option>
+		<option value="20" >20</option>
+		<option value="21" >21</option>
+		<option value="22" >22</option>
+		<option value="23" >23</option>
+		<option value="24" >24</option>
+		<option value="25" >25</option>
+		<option value="26" >26</option>
+		<option value="27" >27</option>
+		<option value="28" >28</option>
+		<option value="29" >29</option>
+		<option value="30" >30</option>
+		<option value="31" >31</option>
+
+
+		// only applicable if "First" to "Fifth" are selected
+		<select name="recurrence[custom-month-day]" style="display: inline">
+			<option value="1"  >Monday</option>
+			<option value="2" >Tuesday</option>
+			<option value="3" >Wednesday</option>
+			<option value="4" >Thursday</option>
+			<option value="5" >Friday</option>
+			<option value="6" >Saturday</option>
+			<option value="7" >Sunday</option>
+			<option value="-" >--</option>
+			<option value="-1" >Day</option>
+		</select>
+
+
+custom-recurrence-years
+
+		// month
+		<label><input type="checkbox" name="recurrence[custom-year-month][]" value="1" /> Jan</label>
+		<label><input type="checkbox" name="recurrence[custom-year-month][]" value="2" /> Feb</label>
+		<label><input type="checkbox" name="recurrence[custom-year-month][]" value="3" /> Mar</label>
+		<label><input type="checkbox" name="recurrence[custom-year-month][]" value="4" /> Apr</label>
+		<label><input type="checkbox" name="recurrence[custom-year-month][]" value="5" /> May</label>
+		<label><input type="checkbox" name="recurrence[custom-year-month][]" value="6" /> Jun</label>
+		<label><input type="checkbox" name="recurrence[custom-year-month][]" value="7" /> Jul</label>
+		<label><input type="checkbox" name="recurrence[custom-year-month][]" value="8" /> Aug</label>
+		<label><input type="checkbox" name="recurrence[custom-year-month][]" value="9" /> Sep</label>
+		<label><input type="checkbox" name="recurrence[custom-year-month][]" value="10" /> Oct</label>
+		<label><input type="checkbox" name="recurrence[custom-year-month][]" value="11" /> Nov</label>
+		<label><input type="checkbox" name="recurrence[custom-year-month][]" value="12" /> Dec</label>
+
+
+		// On the:
+		<input type="checkbox" name="recurrence[custom-year-filter]" value="1" />
+			<select name="recurrence[custom-year-month-number]">
+			<option value="1" >First</option>
+			<option value="2" >Second</option>
+			<option value="3" >Third</option>
+			<option value="4" >Fourth</option>
+			<option value="-1" >Last</option>
+		</select>
+		<select name="recurrence[custom-year-month-day]">
+			<option value="1"  >Monday</option>
+			<option value="2" >Tuesday</option>
+			<option value="3" >Wednesday</option>
+			<option value="4" >Thursday</option>
+			<option value="5" >Friday</option>
+			<option value="6" >Saturday</option>
+			<option value="7" >Sunday</option>
+			<option value="-" >--</option>
+			<option value="-1" >Day</option>
+		</select>
+
+
+// recurrence desc
+<input size="30" name="recurrence[recurrence-description]" type="text" value="" />
+*/
 
 				// record the UID for later use
 				$uids[] = $event->getProperty( 'uid' );
@@ -136,6 +322,11 @@ class TEC_iCal_Parser {
 					// default to show in calendar
 					'EventShowInCalendar'  => 1
 				);
+
+				// recurrence - for PRO version only
+				if ( class_exists( 'TribeEventsPro' ) && ! empty( $event->recurrence ) ) {
+					$args['recurrence'] = $this->get_recurrence_data( $event->recurrence );
+				}
 
 				// whole day event?
 				if ( $event->isWholeDay() ) {
@@ -170,60 +361,6 @@ class TEC_iCal_Parser {
 
 				// $event->isBlocking() - uses TRANSP;
 				// $event->isConfirmed() - uses STATUS;
-
-/* @TODO RECURRENCE
-
-NEED SAMPLE ICAL with recurrence before I can work on this
-
-<select name="recurrence[type]">
-	<option value="None" data-plural="">None</option>
-	<option value="Every Day" data-plural="days" data-single="day">Every Day</option>
-	<option selected="selected" value="Every Week" data-plural="weeks" data-single="week">Every Week</option>
-	<option value="Every Month" data-plural="months" data-single="month">Every Month</option>
-	<option value="Every Year" data-plural="years" data-single="year">Every Year</option>
-	<option value="Custom" data-plural="events" data-single="event">Custom</option>
-</select>
-
-<select name="recurrence[custom-type]">
-	<option data-tablerow="" data-plural="Day(s)" value="Daily">Daily</option>
-	<option data-tablerow="#custom-recurrence-weeks" data-plural="Week(s) on:" value="Weekly">Weekly</option>
-	<option data-tablerow="#custom-recurrence-months" data-plural="Month(s) on the:" value="Monthly">Monthly</option>
-	<option data-tablerow="#custom-recurrence-years" data-plural="Year(s) on:" value="Yearly">Yearly</option>
-</select>
-
-<input type="text" value="" name="recurrence[custom-interval]">
-
-
-<select name="recurrence[end-type]">
-	<option value="On">On</option>
-	<option value="After">After</option>
-	<option selected="selected" value="Never">Never</option>
-</select>
-
-// end-type = on
-<input type="text" style="" value="" id="recurrence_end" name="recurrence[end]" class="datepicker hasDatepicker" placeholder="2013-12-15" autocomplete="off">
-
-// end-type = after
-recurrence['end_count'] = value
-
-$recurrenceData['type'];
-$recurrenceData['end-type'];
-$recurrenceData['end'];
-$recurrenceData['end-count'];
-$recurrenceData['custom-type'];
-$recurrenceData['custom-interval'];
-$recurrenceData['custom-type-text'];
-$recurrenceData['occurrence-count-text'];
-$recurrenceData['recurrence-description']; // optional
-$recurrenceData['custom-week-day'];
-$recurrenceData['custom-month-number'];
-$recurrenceData['custom-month-day'];
-$recurrenceData['custom-year-month'];
-$recurrenceData['custom-year-filter'];
-$recurrenceData['custom-year-month-number'];
-$recurrenceData['custom-year-month-day'];
-
-*/
 
 				// try to find out if the event already exists
 				$existing_event = new WP_Query( array(
@@ -294,6 +431,221 @@ $recurrenceData['custom-year-month-day'];
 
 		remove_action( 'tribe_events_update_meta', array( $this, 'ical_meta' ), 10, 2 );
 
+	}
+
+	/**
+	 * Match iCal recurrence data to Event Calendar PRO's version of recurrence.
+	 *
+	 * @param SG_iCal_Recurrence $event
+	 * @return array
+	 */
+	protected function get_recurrence_data( $event ) {
+		$data = array();
+
+		// interval
+		$interval = $event->getInterval() ? (int) $event->getInterval() : 1;
+
+		// occurences
+		if ( $event->getCount() ) {
+			$data['end-count'] = $event->getCount();
+			$data['end-type']  = 'After';
+
+		// until
+		// @todo this needs testing
+		} elseif ( $event->getUntil() ) {
+			$data['end-type'] = 'On';
+			$data['end']      = self::convert_unix_timestamp_to_date(
+				strtotime( $event->getUntil() ),
+				get_option( 'gmt_offset' ),
+				'Y-m-d'
+			);
+
+		// event is infinite
+		} else {
+			$data['end-type'] = 'Never';
+		}
+
+		// get by___ properties
+		$eventby = array();
+		$eventbyprops = array(
+			'GetByDay', 'GetByMonthDay', 'GetByYearDay', 'GetByWeekNo', 'GetByMonth', 'GetBySetPos'
+		);
+		foreach ( $eventbyprops as $prop ) {
+			if ( $event->$prop() ) {
+				// stupid SG-iCalendar...
+				$key = strtolower( str_replace( 'Get', '', $prop ) );
+
+				$eventby[$key] = $event->$prop();
+			}
+		}
+
+		// simple recurring event
+		if( 1 === $interval && empty( $eventby ) ) {
+			// set type
+			switch( strtolower( $event->getFreq() ) ) {
+				case 'daily' :
+					$type = 'Every Day';
+					break;
+
+				case 'weekly' :
+					$type = 'Every Week';
+					break;
+
+				case 'monthly' :
+					$type = 'Every Month';
+					break;
+
+				case 'yearly' :
+					$type = 'Every Year';
+					break;
+			}
+
+			$data['type'] = $type;
+			$data['occurrence-count-text'] = strtolower( str_replace( 'Every ', '', $type ) );
+
+		// custom recurring event
+		//
+		// Events Calendar PRO doesn't support crazy, advanced recurring events
+		// View latter examples @ http://www.kanzaki.com/docs/ical/rrule.html#example
+		} else {
+			$data['type'] = 'Custom';
+			$data['custom-interval'] = $interval;
+			$data['occurrence-count-text'] = 'event';
+
+			$data['custom-type'] = ucfirst( strtolower( $event->getFreq() ) );
+
+			$this->day_to_number = array(
+				'MO' => 1,
+				'TU' => 2,
+				'WE' => 3,
+				'TH' => 4,
+				'FR' => 5,
+				'SA' => 6,
+				'SU' => 7
+			);
+
+			// grab event BY___ properties
+			switch( strtolower( $event->getFreq() ) ) {
+				case 'weekly' :
+					$data['custom-type-text'] = __( 'Week(s) on:', 'tribe-events-calendar-pro' );
+
+					if ( ! empty( $eventby['byday'] ) ) {
+						$data['custom-week-day'] = array();
+
+						foreach( $eventby['byday'] as $eday ) {
+							if ( isset( $this->day_to_number[$eday] ) ) {
+								$data['custom-week-day'][] = $this->day_to_number[$eday];
+							}
+						}
+					}
+					break;
+
+				case 'monthly' :
+					$data['custom-type-text'] = __( 'Month(s) on the:','tribe-events-calendar-pro' );
+
+					if ( ! empty( $eventby['bymonthday'] ) ) {
+						// EVP only supports one condition and not multiple
+						// so we only grab the first condition...
+						$monthday = $eventby['bymonthday'][0];
+
+						// the last nth day of the month
+						// EVP supports the last day only; it doesn't values less than -1, so we only
+						// check for the last day...
+						if( '-' == substr( $monthday, 0, 1 ) && 1 == substr( $monthday, 1 ) && 2 == strlen( $monthday ) ) {
+							$data['custom-month-number'] = 'Last';
+							$data['custom-month-day']    = -1;
+
+						// the first day of the month
+						} elseif ( 1 == strlen( $monthday ) && 1 == $monthday ) {
+							$data['custom-month-number'] = 'First';
+							$data['custom-month-day']    = -1;
+
+						// the nth day of the month
+						} else {
+							$data['custom-month-number'] = $monthday;
+						}
+
+
+					// EVP only supports one condition and not multiple
+					// so we only grab the first condition...
+					} elseif ( ! empty( $eventby['byday'] ) ) {
+						$day = $this->get_recurrence_by_day_data( $eventby['byday'][0] );
+
+						if ( ! empty( $day ) ) {
+							$data = array_merge( $data, $day );
+						}
+					}
+					break;
+
+				case 'yearly' :
+					$data['custom-type-text'] = __( 'Year(s) on:','tribe-events-calendar-pro' );
+
+					if ( ! empty( $eventby['bymonth'] ) ) {
+						$data['custom-year-month'] = $eventby['bymonth'];
+					}
+
+					if ( ! empty( $eventby['byday'] ) ) {
+						// EVP only supports one condition and not multiple
+						// so we only grab the first condition...
+						$day = $this->get_recurrence_by_day_data( $eventby['byday'][0], 'custom-year-month-number', 'custom-year-month-day' );
+
+						if ( ! empty( $day ) ) {
+							$data = array_merge( $data, $day );
+						}
+					}
+					break;
+			}
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Match iCal recurrence day data to Event Calendar PRO's version.
+	 *
+	 * @param string $day The iCal day data
+	 * @param string $month_number_key The key used in EVP to set the month number
+	 * @param string $month_day_key The key used in EVP to set the month day
+	 * @return array
+	 */
+	protected function get_recurrence_by_day_data( $day = '', $month_number_key = 'custom-month-number', $month_day_key = 'custom-month-day' ) {
+		$data = array();
+
+		$nominal_to_ordinal_number = array(
+			'1' => 'First',
+			'2' => 'Second',
+			'3' => 'Third',
+			'4' => 'Fourth',
+			'5' => 'Fifth',
+		);
+
+		// last _day of the month
+		if( '-' == substr( $day, 0, 1 ) ) {
+			$daysuffix = substr( $day, 1 );
+
+			// EVP only supports the last _day of the month not last nth _day of the month
+			if ( ! is_numeric( $daysuffix ) ) {
+				$data[$month_number_key] = 'Last';
+				$data[$month_day_key]    = $this->day_to_number[$daysuffix];
+			}
+
+		// nth _day of the month
+		} else {
+			$dayprefix = substr( $day, 0, 1 );
+
+			if ( is_numeric( $dayprefix ) ) {
+				$day = substr( $day, 1 );
+				$data[$month_number_key] = $nominal_to_ordinal_number[$dayprefix];
+				$data[$month_day_key]    = $this->day_to_number[$day];
+
+			// every month, every _day
+			// this condition doesn't exist in EVP at the moment
+			} else {
+				// BLANK FOR NOW
+			}
+		}
+
+		return $data;
 	}
 
 	/**
