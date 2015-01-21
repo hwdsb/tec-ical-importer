@@ -64,9 +64,6 @@ class TEC_iCal_Parser {
 		// add hook to update custom event meta
 		add_action( 'tribe_events_update_meta', array( $this, 'ical_meta' ), 10, 2 );
 
-		// get gmt offset
-		$gmt_offset = get_option( 'gmt_offset' );
-
 		// If safe mode isn't on, then let's set the execution time to unlimited
 		if ( ! ini_get( 'safe_mode' ) ) {
 			set_time_limit( 0 );
@@ -158,12 +155,23 @@ SG_iCal_VEvent Object
 				// record the UID for later use
 				$uids[] = $event->getProperty( 'uid' );
 
+				$eventLastModified = "";
+				$eventData = $event->getProperty("data");
+				if (array_key_exists("last-modified", $eventData))
+				{
+					$eventLastModified = $eventData["last-modified"];
+				}
+
+				// get gmt offset
+				$gmt_offset = get_option( 'gmt_offset' );
+
 				// setup default args
 				$args = array(
 					'post_title'    => $event->getProperty( 'summary' ),
 					'post_status'   => 'publish',
 					'post_content'  => $event->getProperty( 'description' ),
 					'ical_uid'      => $event->getProperty( 'uid' ),
+					'ical_last_modified' => $eventLastModified,
 				        'ical_sequence' => $event->getProperty( 'sequence' ),
 				        'ical_link'     => $ical['link'],
 
@@ -201,9 +209,11 @@ SG_iCal_VEvent Object
 				$args['EventStartDate']   = TribeDateUtils::dateOnly( $startdate );
 				$args['EventStartHour']   = TribeDateUtils::hourOnly( $startdate );
 				$args['EventStartMinute'] = TribeDateUtils::minutesOnly( $startdate );
+				$args['EventStartMeridian']   = TribeDateUtils::meridianOnly( $startdate );
 				$args['EventEndDate']     = TribeDateUtils::dateOnly( $enddate );
 				$args['EventEndHour']     = TribeDateUtils::hourOnly( $enddate );
 				$args['EventEndMinute']   = TribeDateUtils::minutesOnly( $enddate );
+				$args['EventEndMeridian']   = TribeDateUtils::meridianOnly( $enddate );
 
 				/** FOR LATER? **/
 				//$args['Venue'] = $event->getProperty( 'location' );
@@ -232,10 +242,9 @@ SG_iCal_VEvent Object
 				// existing event exists!
 				// check if there are any updates
 				if ( ! empty( $existing_event->post->ID ) ) {
-					$existing_sequence = (int) get_post_meta( $existing_event->post->ID, '_tec_ical_sequence', true );
 
 					// there are new updates, so update event
-					if ( $event->getProperty( 'sequence' ) > $existing_sequence ) {
+					if ($eventLastModified !== get_post_meta($existing_event->post->ID, '_tec_ical_last_modified', true)) {
 						// iterate count
 						++$updated_count;
 
@@ -251,6 +260,9 @@ SG_iCal_VEvent Object
 				} else {
 					// iterate count
 					++$added_count;
+
+					// set the post type, it's REQUIRED for an update
+					$args["post_type"] = TribeEvents::POSTTYPE;
 
 					// apply a filter just in case!
 					$args = apply_filters( 'tec_ical_create_event_args', $args, $event );
@@ -568,6 +580,7 @@ SG_iCal_VEvent Object
 
 		update_post_meta( $post_id, '_tec_ical_link',            $data['ical_link'] );
 		update_post_meta( $post_id, '_tec_ical_uid',             $data['ical_uid'] );
+		update_post_meta( $post_id, '_tec_ical_last_modified',   $data['ical_last_modified'] );
 		update_post_meta( $post_id, '_tec_ical_sequence',        $data['ical_sequence'] );
 		update_post_meta( $post_id, '_tec_ical_start_timestamp', $data['ical_start_timestamp'] );
 		update_post_meta( $post_id, '_tec_ical_end_timestamp',   $data['ical_end_timestamp'] );
