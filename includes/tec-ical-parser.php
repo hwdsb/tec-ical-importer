@@ -64,9 +64,6 @@ class TEC_iCal_Parser {
 		// add hook to update custom event meta
 		add_action( 'tribe_events_update_meta', array( $this, 'ical_meta' ), 10, 2 );
 
-		// get gmt offset
-		$gmt_offset = get_option( 'gmt_offset' );
-
 		// If safe mode isn't on, then let's set the execution time to unlimited
 		if ( ! ini_get( 'safe_mode' ) ) {
 			set_time_limit( 0 );
@@ -157,6 +154,9 @@ SG_iCal_VEvent Object
 
 				// record the UID for later use
 				$uids[] = $event->getProperty( 'uid' );
+
+				// get gmt offset
+				$gmt_offset = get_option( 'gmt_offset' );
 
 				// setup default args
 				$args = array(
