@@ -259,6 +259,9 @@ SG_iCal_VEvent Object
 					// iterate count
 					++$added_count;
 
+					// set the post type, it's REQUIRED for an update
+					$args["post_type"] = TribeEvents::POSTTYPE;
+
 					// apply a filter just in case!
 					$args = apply_filters( 'tec_ical_create_event_args', $args, $event );
 
