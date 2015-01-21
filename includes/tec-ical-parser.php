@@ -244,7 +244,7 @@ SG_iCal_VEvent Object
 				if ( ! empty( $existing_event->post->ID ) ) {
 
 					// there are new updates, so update event
-					if ($eventLastModified != get_post_meta($existing_event->post->ID, '_tec_ical_last_modified', true)) {
+					if ($eventLastModified !== get_post_meta($existing_event->post->ID, '_tec_ical_last_modified', true)) {
 						// iterate count
 						++$updated_count;
 
