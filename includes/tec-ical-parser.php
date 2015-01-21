@@ -209,9 +209,11 @@ SG_iCal_VEvent Object
 				$args['EventStartDate']   = TribeDateUtils::dateOnly( $startdate );
 				$args['EventStartHour']   = TribeDateUtils::hourOnly( $startdate );
 				$args['EventStartMinute'] = TribeDateUtils::minutesOnly( $startdate );
+				$args['EventStartMeridian']   = TribeDateUtils::meridianOnly( $startdate );
 				$args['EventEndDate']     = TribeDateUtils::dateOnly( $enddate );
 				$args['EventEndHour']     = TribeDateUtils::hourOnly( $enddate );
 				$args['EventEndMinute']   = TribeDateUtils::minutesOnly( $enddate );
+				$args['EventEndMeridian']   = TribeDateUtils::meridianOnly( $enddate );
 
 				/** FOR LATER? **/
 				//$args['Venue'] = $event->getProperty( 'location' );
