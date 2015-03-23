@@ -80,8 +80,11 @@ class TEC_iCal_Admin {
 		// existing, saved icals
 		$icals = TEC_iCal::get_icals();
 
+		// inputted icals
+		$input_icals = ! empty( $input['icals'] ) ? $input['icals'] : array();
+
 		// unverified icals
-		$untested_icals = $this->array_diff_assoc_recursive( $input['icals'], $icals );
+		$untested_icals = $this->array_diff_assoc_recursive( $input_icals, $icals );
 		$untested_icals = $this->array_remove_empty( $untested_icals );
 
 		// validate untested icals
