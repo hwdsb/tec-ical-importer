@@ -85,7 +85,7 @@ class TEC_iCal_Parser {
 			$uids = array();
 
 			// parse each iCalendar event
-			foreach ( $parser->getEvents() as $event ) {
+			foreach ( (array) $parser->getEvents() as $event ) {
 /* Sample event data
 SG_iCal_VEvent Object
 (
