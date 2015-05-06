@@ -467,19 +467,19 @@ class TEC_iCal_Admin {
 	 */
 	protected function ical_exists( $ical_url = '' ) {
 		// get iCal headers
-		$ical_headers = get_headers( $ical_url, 1 );
+		$ical_headers = wp_remote_retrieve_headers( wp_remote_get( $ical_url ) );
 
 		if ( empty( $ical_headers ) ) {
 			return false;
 		}
 
 		// Content-Type shouldn't be an array
-		if ( ! empty( $ical_headers['Content-Type'] ) && is_array( $ical_headers['Content-Type'] ) ) {
+		if ( ! empty( $ical_headers['content-type'] ) && is_array( $ical_headers['content-type'] ) ) {
 			return false;
 		}
 
 		// link is not an iCalendar file, so stop!
-		if ( strpos( $ical_headers['Content-Type'], 'text/calendar' ) ===  false ) {
+		if ( strpos( $ical_headers['content-type'], 'text/calendar' ) ===  false ) {
 			return false;
 		}
 
