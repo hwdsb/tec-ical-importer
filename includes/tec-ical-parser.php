@@ -206,14 +206,14 @@ SG_iCal_VEvent Object
 				}
 
 				// save event date / time
-				$args['EventStartDate']   = TribeDateUtils::dateOnly( $startdate );
-				$args['EventStartHour']   = TribeDateUtils::hourOnly( $startdate );
-				$args['EventStartMinute'] = TribeDateUtils::minutesOnly( $startdate );
-				$args['EventStartMeridian']   = TribeDateUtils::meridianOnly( $startdate );
-				$args['EventEndDate']     = TribeDateUtils::dateOnly( $enddate );
-				$args['EventEndHour']     = TribeDateUtils::hourOnly( $enddate );
-				$args['EventEndMinute']   = TribeDateUtils::minutesOnly( $enddate );
-				$args['EventEndMeridian']   = TribeDateUtils::meridianOnly( $enddate );
+				$args['EventStartDate']     = Tribe__Events__Date_Utils::dateOnly( $startdate );
+				$args['EventStartHour']     = Tribe__Events__Date_Utils::hourOnly( $startdate );
+				$args['EventStartMinute']   = Tribe__Events__Date_Utils::minutesOnly( $startdate );
+				$args['EventStartMeridian'] = Tribe__Events__Date_Utils::meridianOnly( $startdate );
+				$args['EventEndDate']       = Tribe__Events__Date_Utils::dateOnly( $enddate );
+				$args['EventEndHour']       = Tribe__Events__Date_Utils::hour_only( $enddate );
+				$args['EventEndMinute']     = Tribe__Events__Date_Utils::minutesOnly( $enddate );
+				$args['EventEndMeridian']   = Tribe__Events__Date_Utils::meridianOnly( $enddate );
 
 				/** FOR LATER? **/
 				//$args['Venue'] = $event->getProperty( 'location' );
