@@ -68,7 +68,7 @@ class TEC_iCal {
 	 * Constructor.
 	 */
 	public function __construct() {
-		if ( ! class_exists( 'TribeEvents' ) ) {
+		if ( ! class_exists( 'Tribe__Events__Main' ) ) {
 			return false;
 		}
 

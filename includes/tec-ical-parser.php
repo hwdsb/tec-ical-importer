@@ -33,7 +33,7 @@ class TEC_iCal_Parser {
 	 * @param array $icals Array of iCalendar data. See phpDoc.
 	 */
 	public function __construct( $icals = array() ) {
-		if ( ! class_exists( 'TribeEvents' ) ) {
+		if ( ! class_exists( 'Tribe__Events__Main' ) ) {
 			return false;
 		}
 
@@ -184,7 +184,7 @@ SG_iCal_VEvent Object
 				);
 
 				// recurrence - for PRO version only
-				if ( class_exists( 'TribeEventsPro' ) && ! empty( $event->recurrence ) ) {
+				if ( class_exists( 'Tribe__Events__Pro__Main' ) && ! empty( $event->recurrence ) ) {
 					$args['recurrence'] = $this->get_recurrence_data( $event->recurrence );
 				}
 
@@ -226,11 +226,11 @@ SG_iCal_VEvent Object
 
 				// Events Calendar adds a bunch of stuff to WP_Query for event queries
 				// we don't want their injections, so remove it here
-				remove_action( 'parse_query', array( 'TribeEventsQuery', 'parse_query' ), 50 );
+				remove_action( 'parse_query', array( 'Tribe__Events__MainQuery', 'parse_query' ), 50 );
 
 				// try to find out if the event already exists
 				$existing_event = new WP_Query( array(
-					'post_type'  => TribeEvents::POSTTYPE,
+					'post_type'  => Tribe__Events__Main::POSTTYPE,
 					'meta_key'   => '_tec_ical_uid',
 					'meta_value' => $event->getProperty( 'uid' ),
 
@@ -262,7 +262,7 @@ SG_iCal_VEvent Object
 					++$added_count;
 
 					// set the post type, it's REQUIRED for an update
-					$args["post_type"] = TribeEvents::POSTTYPE;
+					$args["post_type"] = Tribe__Events__Main::POSTTYPE;
 
 					// apply a filter just in case!
 					$args = apply_filters( 'tec_ical_create_event_args', $args, $event );
@@ -272,7 +272,7 @@ SG_iCal_VEvent Object
 
 					// save category if set in admin area
 					if ( ! empty( $ical['category'] ) ) {
-						wp_set_object_terms( $post_id, $ical['category'], TribeEvents::TAXONOMY );
+						wp_set_object_terms( $post_id, $ical['category'], Tribe__Events__Main::TAXONOMY );
 					}
 
 					// hook for developers!

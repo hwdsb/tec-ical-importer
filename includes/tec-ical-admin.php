@@ -47,7 +47,7 @@ class TEC_iCal_Admin {
 	public function menu() {
 		// register admin menu
 		$page = add_submenu_page(
-			'edit.php?post_type=' . TribeEvents::POSTTYPE,
+			'edit.php?post_type=' . Tribe__Events__Main::POSTTYPE,
 			__( 'iCalendar Importer','tec-ical' ),
 			__( 'iCal Import','tec-ical' ),
 			'administrator',
@@ -265,7 +265,7 @@ class TEC_iCal_Admin {
 			$this->render_field( array(
 				'name'  => "{$field_prefix}category",
 				'labelname' => __( 'Category Slug', 'tec-ical' ),
-				'desc'  => sprintf( __( '(Optional) Enter the <a href="%s">event category</a> slug where imported events for this calendar should reside.  If the calendar slug does not exist, a new event category will be created.  If left blank, events will not be saved into any category.', 'tec-ical' ), admin_url( 'edit-tags.php?taxonomy=' . TribeEvents::TAXONOMY . '&posttype=' . TribeEvents::POSTTYPE ) ),
+				'desc'  => sprintf( __( '(Optional) Enter the <a href="%s">event category</a> slug where imported events for this calendar should reside.  If the calendar slug does not exist, a new event category will be created.  If left blank, events will not be saved into any category.', 'tec-ical' ), admin_url( 'edit-tags.php?taxonomy=' . Tribe__Events__Main::TAXONOMY . '&posttype=' . Tribe__Events__Main::POSTTYPE ) ),
 				'value' => ! empty( $ical_settings[$i]['category'] ) ? $ical_settings[$i]['category'] : ''
 			) );
 		}
