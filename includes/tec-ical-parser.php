@@ -226,7 +226,7 @@ SG_iCal_VEvent Object
 
 				// Events Calendar adds a bunch of stuff to WP_Query for event queries
 				// we don't want their injections, so remove it here
-				remove_action( 'parse_query', array( 'Tribe__Events__MainQuery', 'parse_query' ), 50 );
+				remove_action( 'parse_query', array( 'Tribe__Events__Query', 'parse_query' ), 50 );
 
 				// try to find out if the event already exists
 				$existing_event = new WP_Query( array(
