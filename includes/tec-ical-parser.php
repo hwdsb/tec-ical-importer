@@ -342,7 +342,7 @@ SG_iCal_VEvent Object
 			$rules['end-type'] = 'On';
 			$rules['end']      = self::convert_unix_timestamp_to_date(
 				strtotime( $event->getUntil() ),
-				get_option( 'gmt_offset' ),
+				0,
 				'Y-m-d'
 			);
 
