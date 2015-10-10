@@ -309,20 +309,21 @@ SG_iCal_VEvent Object
 	 */
 	protected function get_recurrence_data( $event ) {
 		$data = array();
+		$rules = array();
 
 		// interval
 		$interval = $event->getInterval() ? (int) $event->getInterval() : 1;
 
 		// occurences
 		if ( $event->getCount() ) {
-			$data['end-count'] = $event->getCount();
-			$data['end-type']  = 'After';
+			$rules['end-count'] = $event->getCount();
+			$rules['end-type']  = 'After';
 
 		// until
 		// @todo this needs testing
 		} elseif ( $event->getUntil() ) {
-			$data['end-type'] = 'On';
-			$data['end']      = self::convert_unix_timestamp_to_date(
+			$rules['end-type'] = 'On';
+			$rules['end']      = self::convert_unix_timestamp_to_date(
 				strtotime( $event->getUntil() ),
 				get_option( 'gmt_offset' ),
 				'Y-m-d'
@@ -330,7 +331,7 @@ SG_iCal_VEvent Object
 
 		// event is infinite
 		} else {
-			$data['end-type'] = 'Never';
+			$rules['end-type'] = 'Never';
 		}
 
 		// get by___ properties
@@ -368,50 +369,49 @@ SG_iCal_VEvent Object
 					break;
 			}
 
-			$data['type'] = $type;
-			$data['occurrence-count-text'] = strtolower( str_replace( 'Every ', '', $type ) );
+			$rules['type'] = $type;
 
 		// custom recurring event
 		//
 		// Events Calendar PRO doesn't support crazy, advanced recurring events
 		// View latter examples @ http://www.kanzaki.com/docs/ical/rrule.html#example
 		} else {
-			$data['type'] = 'Custom';
-			$data['custom-interval'] = $interval;
-			$data['occurrence-count-text'] = 'event';
+			$rules['type'] = 'Custom';
+			$rules['custom'] = array();
+			$rules['custom']['type'] = ucfirst( strtolower( $event->getFreq() ) );
+			$rules['custom']['interval'] = $interval;
 
-			$data['custom-type'] = ucfirst( strtolower( $event->getFreq() ) );
-
+			// TEC needs the number to be a string... wasted an hour here
 			$this->day_to_number = array(
-				'MO' => 1,
-				'TU' => 2,
-				'WE' => 3,
-				'TH' => 4,
-				'FR' => 5,
-				'SA' => 6,
-				'SU' => 7
+				'MO' => '1',
+				'TU' => '2',
+				'WE' => '3',
+				'TH' => '4',
+				'FR' => '5',
+				'SA' => '6',
+				'SU' => '7'
 			);
 
 			// grab event BY___ properties
 			switch( strtolower( $event->getFreq() ) ) {
 				case 'weekly' :
-					$data['custom-type-text'] = __( 'Week(s) on:', 'tribe-events-calendar-pro' );
-
 					if ( ! empty( $eventby['byday'] ) ) {
-						$data['custom-week-day'] = array();
+						$rules['custom']['week'] = array();
+						$rules['custom']['week']['same-time'] = 'yes';
 
 						foreach( $eventby['byday'] as $eday ) {
 							if ( isset( $this->day_to_number[$eday] ) ) {
-								$data['custom-week-day'][] = $this->day_to_number[$eday];
+								$rules['custom']['week']['day'][] = $this->day_to_number[$eday];
 							}
 						}
 					}
 					break;
 
 				case 'monthly' :
-					$data['custom-type-text'] = __( 'Month(s) on the:','tribe-events-calendar-pro' );
-
 					if ( ! empty( $eventby['bymonthday'] ) ) {
+						$rules['custom']['month'] = array();
+						$rules['custom']['month']['same-time'] = 'yes';
+
 						// EVP only supports one condition and not multiple
 						// so we only grab the first condition...
 						$monthday = $eventby['bymonthday'][0];
@@ -420,17 +420,17 @@ SG_iCal_VEvent Object
 						// EVP supports the last day only; it doesn't values less than -1, so we only
 						// check for the last day...
 						if( '-' == substr( $monthday, 0, 1 ) && 1 == substr( $monthday, 1 ) && 2 == strlen( $monthday ) ) {
-							$data['custom-month-number'] = 'Last';
-							$data['custom-month-day']    = -1;
+							$rules['custom']['month']['number'] = 'Last';
+							$rules['custom']['month']['day']    = -1;
 
 						// the first day of the month
 						} elseif ( 1 == strlen( $monthday ) && 1 == $monthday ) {
-							$data['custom-month-number'] = 'First';
-							$data['custom-month-day']    = -1;
+							$rules['custom']['month']['number'] = 'First';
+							$rules['custom']['month']['day']    = -1;
 
 						// the nth day of the month
 						} else {
-							$data['custom-month-number'] = $monthday;
+							$rules['custom']['month']['number'] = $monthday;
 						}
 
 
@@ -440,30 +440,30 @@ SG_iCal_VEvent Object
 						$day = $this->get_recurrence_by_day_data( $eventby['byday'][0] );
 
 						if ( ! empty( $day ) ) {
-							$data = array_merge( $data, $day );
+							$rules = array_merge( $rules, $day );
 						}
 					}
 					break;
 
 				case 'yearly' :
-					$data['custom-type-text'] = __( 'Year(s) on:','tribe-events-calendar-pro' );
-
 					if ( ! empty( $eventby['bymonth'] ) ) {
-						$data['custom-year-month'] = $eventby['bymonth'];
+						$rules['custom-year-month'] = $eventby['bymonth'];
 					}
 
 					if ( ! empty( $eventby['byday'] ) ) {
 						// EVP only supports one condition and not multiple
 						// so we only grab the first condition...
-						$day = $this->get_recurrence_by_day_data( $eventby['byday'][0], 'custom-year-month-number', 'custom-year-month-day' );
+						$day = $this->get_recurrence_by_day_data( $eventby['byday'][0], 'year' );
 
 						if ( ! empty( $day ) ) {
-							$data = array_merge( $data, $day );
+							$rules = array_merge( $rules, $day );
 						}
 					}
 					break;
 			}
 		}
+
+		$data['rules'][] = $rules;
 
 		return $data;
 	}
