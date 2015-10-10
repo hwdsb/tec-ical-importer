@@ -84,6 +84,11 @@ class TEC_iCal_Parser {
 
 			$uids = array();
 
+			$timezone = '';
+			if ( ! empty( $parser->timezones ) ) {
+				$timezone = $this->validate_timezone( $parser->timezones[0]->getTimeZoneId() );
+			}
+
 			// parse each iCalendar event
 			foreach ( (array) $parser->getEvents() as $event ) {
 /* Sample event data
@@ -214,6 +219,19 @@ SG_iCal_VEvent Object
 				$args['EventEndHour']       = Tribe__Events__Date_Utils::hour_only( $enddate );
 				$args['EventEndMinute']     = Tribe__Events__Date_Utils::minutes_only( $enddate );
 				$args['EventEndMeridian']   = Tribe__Events__Date_Utils::meridian_only( $enddate );
+
+				// set event timezone
+				$event_tz = $event->getProperty( 'tzid' );
+				if ( ! empty( $event_tz ) ) {
+					$event_tz = $this->validate_timezone( $event_tz );
+
+					if ( ! empty( $event_tz ) ) {
+						$args['EventTimezone'] = $event_tz;
+					}
+				}
+				if ( empty( $args['EventTimezone'] ) && ! empty( $timezone ) ) {
+					$args['EventTimezone'] = $timezone;
+				}
 
 				/** FOR LATER? **/
 				//$args['Venue'] = $event->getProperty( 'location' );
@@ -521,6 +539,31 @@ SG_iCal_VEvent Object
 		}
 
 		return $retval;
+	}
+
+	/**
+	 * Validate timezone.
+	 *
+	 * Only let through tz timezones. We do this by checking if the timezone
+	 * has a space in it.  If it does, it's not valid.
+	 *
+	 * @see https://en.wikipedia.org/wiki/Tz_database
+	 *
+	 * @param  string $tz Timezone string
+	 * @return string
+	 */
+	protected function validate_timezone( $tz = '' ) {
+		if ( ! empty( $tz ) ) {
+			// we do not support non-standard tz timezones
+			// in this case, TEC will revert to WP's current timezone
+			if ( false !== strpos( $tz, ' ' ) ) {
+				$tz = '';
+			}
+		} else {
+			$tz = '';
+		}
+
+		return $tz;
 	}
 
 	/**
