@@ -471,13 +471,12 @@ SG_iCal_VEvent Object
 	/**
 	 * Match iCal recurrence day data to Event Calendar PRO's version.
 	 *
-	 * @param string $day The iCal day data
-	 * @param string $month_number_key The key used in EVP to set the month number
-	 * @param string $month_day_key The key used in EVP to set the month day
+	 * @param string $day  The iCal day data
+	 * @param string $type Either 'month' or 'year'. Default: 'month'
 	 * @return array
 	 */
-	protected function get_recurrence_by_day_data( $day = '', $month_number_key = 'custom-month-number', $month_day_key = 'custom-month-day' ) {
-		$data = array();
+	protected function get_recurrence_by_day_data( $day = '', $type = 'month' ) {
+		$retval = array();
 
 		$nominal_to_ordinal_number = array(
 			'1' => 'First',
@@ -493,8 +492,8 @@ SG_iCal_VEvent Object
 
 			// EVP only supports the last _day of the month not last nth _day of the month
 			if ( ! is_numeric( $daysuffix ) ) {
-				$data[$month_number_key] = 'Last';
-				$data[$month_day_key]    = $this->day_to_number[$daysuffix];
+				$data['number'] = 'Last';
+				$data['day']    = $this->day_to_number[$daysuffix];
 			}
 
 		// nth _day of the month
@@ -503,8 +502,8 @@ SG_iCal_VEvent Object
 
 			if ( is_numeric( $dayprefix ) ) {
 				$day = substr( $day, 1 );
-				$data[$month_number_key] = $nominal_to_ordinal_number[$dayprefix];
-				$data[$month_day_key]    = $this->day_to_number[$day];
+				$data['number'] = $nominal_to_ordinal_number[$dayprefix];
+				$data['day']    = $this->day_to_number[$day];
 
 			// every month, every _day
 			// this condition doesn't exist in EVP at the moment
@@ -513,7 +512,15 @@ SG_iCal_VEvent Object
 			}
 		}
 
-		return $data;
+		if ( 'month' === $type ) {
+			$retval['custom']['month'] = $data;
+			$retval['custom']['month']['same-time'] = 'yes';
+		} else {
+			$retval['custom']['year']['month'] = $data;
+			$retval['custom']['year']['month']['same-time'] = 'yes';
+		}
+
+		return $retval;
 	}
 
 	/**
