@@ -160,11 +160,10 @@ SG_iCal_VEvent Object
 				// record the UID for later use
 				$uids[] = $event->getProperty( 'uid' );
 
-				$eventLastModified = "";
-				$eventData = $event->getProperty("data");
-				if (array_key_exists("last-modified", $eventData))
-				{
-					$eventLastModified = $eventData["last-modified"];
+				// last modified
+				$last_modified = $event->getProperty( 'last-modified' );
+				if ( empty( $last_modified ) ) {
+					$last_modified = '';
 				}
 
 				// get gmt offset
@@ -172,13 +171,13 @@ SG_iCal_VEvent Object
 
 				// setup default args
 				$args = array(
-					'post_title'    => $event->getProperty( 'summary' ),
-					'post_status'   => 'publish',
-					'post_content'  => $event->getProperty( 'description' ),
-					'ical_uid'      => $event->getProperty( 'uid' ),
-					'ical_last_modified' => $eventLastModified,
-				        'ical_sequence' => $event->getProperty( 'sequence' ),
-				        'ical_link'     => $ical['link'],
+					'post_title'         => $event->getProperty( 'summary' ),
+					'post_status'        => 'publish',
+					'post_content'       => $event->getProperty( 'description' ),
+					'ical_uid'           => $event->getProperty( 'uid' ),
+					'ical_last_modified' => $last_modified,
+				        'ical_sequence'      => $event->getProperty( 'sequence' ),
+				        'ical_link'          => $ical['link'],
 
 					// saving for posterity's sake; these are unix timestamps
 				        'ical_start_timestamp' => $event->getProperty( 'start' ),
@@ -262,7 +261,7 @@ SG_iCal_VEvent Object
 				if ( ! empty( $existing_event->post->ID ) ) {
 
 					// there are new updates, so update event
-					if ($eventLastModified !== get_post_meta($existing_event->post->ID, '_tec_ical_last_modified', true)) {
+					if ( $last_modified !== get_post_meta( $existing_event->post->ID, '_tec_ical_last_modified', true ) ) {
 						// iterate count
 						++$updated_count;
 
