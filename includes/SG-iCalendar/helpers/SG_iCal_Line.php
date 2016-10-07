@@ -25,6 +25,9 @@ class SG_iCal_Line implements ArrayAccess, Countable, IteratorAggregate {
 	 * Constructs a new line.
 	 */
 	public function __construct( $line ) {
+		// Ugh.
+		$line = $this->fixInvalidTimeZones( $line );
+
 		$split = strpos($line, ':');
 		$idents = explode(';', substr($line, 0, $split));
 		$ident = strtolower(array_shift($idents));
@@ -41,6 +44,33 @@ class SG_iCal_Line implements ArrayAccess, Countable, IteratorAggregate {
 		$this->ident = $ident;
 		$this->params = $params;
 		$this->data = $data;
+	}
+
+	/**
+	 * Fix parsing of invalid timezones, mostly by Outlook iCals.
+	 *
+	 * In an ideal world, this shouldn't be done in the SG_iCal_Line class, but
+	 * Outlook iCals suck!
+	 *
+	 * @since TEC-ICAL 0.1 This is a custom mod by HWDSB.
+	 *
+	 * @param  string $line Current line to parse.
+	 * @return string
+	 */
+	public function fixInvalidTimezones( $line ) {
+		/*
+		 * Remove invalid timezones by Outlook iCal files. Ugh.
+		 *
+		 * eg. DTSTART;TZID="(UTC-05:00) Eastern Time (US & Canada)":20160921T090000
+		 *
+		 * is changed to DTSTART:20160921T090000.  We do not try to convert Microsoft
+		 * timezones at the moment.
+		 */
+		if ( false !== strpos( $line, 'TZID="' ) ) {
+			$line = preg_replace( '/(;TZID=".*):/', ':', $line );
+		}
+
+		return $line;
 	}
 
 	/**
