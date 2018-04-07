@@ -3,7 +3,7 @@ The Events Calendar - iCalendar Importer
 
 This plugin allows site administrators to enter remotely-located iCalendar files to be synched and imported into [The Events Calendar](http://wordpress.org/plugins/the-events-calendar/) plugin for [WordPress](http://wordpress.org).
 
-Tested with The Events Calendar 4.2.7 and The Events Calendar PRO 4.2.6.
+Tested with The Events Calendar 4.6.13 and The Events Calendar PRO 4.4.24.2.
 
 How to use?
 -
