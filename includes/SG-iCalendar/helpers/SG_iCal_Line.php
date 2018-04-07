@@ -28,7 +28,7 @@ class SG_iCal_Line implements ArrayAccess, Countable, IteratorAggregate {
 	 */
 	public function __construct( $line ) {
 		// Ugh.
-		$line = $this->fixInvalidTimeZones( $line );
+		$line = $this->fixMicrosoftTimeZones( $line );
 
 		$split = strpos($line, ':');
 		$idents = explode(';', substr($line, 0, $split));
@@ -49,7 +49,15 @@ class SG_iCal_Line implements ArrayAccess, Countable, IteratorAggregate {
 	}
 
 	/**
-	 * Fix parsing of invalid timezones, mostly by Outlook iCals.
+	 * Fix parsing of Microsoft timezones, mostly used by Outlook iCals.
+	 *
+	 * SG-iCalendar has problems parsing TZIDs, notably by Outlook iCals.
+	 *
+	 * For example, for the following:
+	 *    DTSTART;TZID="(UTC-05:00) Eastern Time (US & Canada)":20180411T080000
+	 *
+	 * We convert this to a UTC timestamp and strip the TZID:
+	 *    DTSTART:20180411T120000
 	 *
 	 * In an ideal world, this shouldn't be done in the SG_iCal_Line class, but
 	 * Outlook iCals suck!
@@ -59,19 +67,66 @@ class SG_iCal_Line implements ArrayAccess, Countable, IteratorAggregate {
 	 * @param  string $line Current line to parse.
 	 * @return string
 	 */
-	public function fixInvalidTimezones( $line ) {
-		/*
-		 * Remove invalid timezones by Outlook iCal files. Ugh.
-		 *
-		 * eg. DTSTART;TZID="(UTC-05:00) Eastern Time (US & Canada)":20160921T090000
-		 *
-		 * is changed to DTSTART:20160921T090000.  We do not try to convert Microsoft
-		 * timezones at the moment.
-		 */
-		if ( false !== strpos( $line, 'TZID="' ) ) {
-			$line = preg_replace( '/(;TZID=".*):/', ':', $line );
+	public function fixMicrosoftTimeZones( $line ) {
+		// If not a DTSTART or DTEND line, bail.
+		if ( 0 !== strpos( $line, 'DTSTART' ) && 0 !== strpos( $line, 'DTEND' ) ) {
+			return $line;
 		}
 
+		$_line = str_replace( array( 'DTSTART;', 'DTEND;' ), '', $line );
+		$parts = explode( ':', $_line );
+		if ( ! empty( $parts[0] ) && false !== strpos( $parts[0], 'TZID=' ) ) {
+			$tzid = $parts[0];
+
+			// Leave UTC alone.
+			if ( false !== strpos( $tzid, '(UTC)' ) ) {
+				$line = str_replace( ';' . $tzid, '', $line );
+
+			// This is a Microsoft timezone.
+			} elseif ( false !== strpos( $tzid, '(UTC' ) ) {
+				$offset_pos = strpos( $tzid, '(UTC' );
+				$offset = substr( $tzid, $offset_pos + 1 );
+				if ( ! empty( $parts[2] ) ) {
+					$tzid = $parts[0] . ':' . $parts[1];
+					$time = $parts[2];
+					$offset .= substr( $parts[1], 0, 2 );
+				} else {
+					$time = $parts[1];
+				}
+
+				$map = '';
+
+				// Try to map Microsoft timezone to Olson timezone.
+				$tz = substr( $tzid, strpos( $tzid, '(' ) );
+				$tz = trim( $tz, '"' );
+				$findZone = strpos( $this->getZones(), $tz );
+
+				// Fetch the first Olson timezone that matches a Microsoft timezone.
+				if ( false !== $findZone ) {
+					$findZoneStart = strpos( $this->zones, "\n", $findZone );
+					$findZoneEnd = strpos( $this->zones, "\n", $findZoneStart + 1 );
+					$map = substr( $this->zones, $findZoneStart, $findZoneEnd - $findZoneStart );
+					$map = substr( $map, strpos( $map, 'type=' ) + 6, -3 );
+				}
+
+				// Success, we can use a valid timezone!
+				if ( ! empty( $map ) ) {
+					$d = new DateTime( $time, new DateTimeZone( $map ) );
+
+				// Use offset. This is not accurate for those that observe DST...
+				} else {
+					$offset = substr( $offset, 3 );
+					$offsettime = $time . $offset;
+					$d = new DateTime( $offsettime );
+				}
+
+				// Standardize timezone to UTC.
+				$d->setTimezone( new DateTimeZone( 'UTC' ) );
+
+				$line = str_replace( ';' . $tzid, '', $line );
+				$line = str_replace( $time, $d->format( 'Ymd\THis' ), $line );
+			}
+		}
 		return $line;
 	}
 
