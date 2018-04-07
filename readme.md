@@ -19,6 +19,7 @@ How to use?
 Thanks
 -
 * SG-iCalendar - A simple and fast iCal parser.  Currently using [lipemat's fork](https://github.com/lipemat/SG-iCalendar).  Original is by [fangal](https://github.com/fangel/SG-iCalendar).  Licensed under the [Creative Commons Attribution-ShareAlike 2.5 (Denmark)](https://creativecommons.org/licenses/by-sa/2.5/dk/deed.en).
+* [Unicode CLDR](http://cldr.unicode.org/index) - For their [Windows timezones XML file](https://unicode.org/cldr/trac/browser/trunk/common/supplemental/windowsZones.xml). Licensed under the [ICU](http://source.icu-project.org/repos/icu/trunk/icu4j/main/shared/licenses/LICENSE).
 
 
 License

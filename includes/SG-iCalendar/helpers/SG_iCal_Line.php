@@ -21,6 +21,8 @@ class SG_iCal_Line implements ArrayAccess, Countable, IteratorAggregate {
 
 	protected $replacements = array('from'=>array('\\,', '\\n', '\\;', '\\:', '\\"'), 'to'=>array(',', "\n", ';', ':', '"'));
 
+	protected $zones = '';
+
 	/**
 	 * Constructs a new line.
 	 */
@@ -71,6 +73,23 @@ class SG_iCal_Line implements ArrayAccess, Countable, IteratorAggregate {
 		}
 
 		return $line;
+	}
+
+	/**
+	 * Fetch Windows timezone mapping data.
+	 *
+	 * Uses timezone data from Unicode CLDR. Licensed under the ICU.
+	 *
+	 * @link   https://unicode.org/cldr/trac/browser/trunk/common/supplemental/windowsZones.xml
+	 * @link   http://source.icu-project.org/repos/icu/trunk/icu4j/main/shared/licenses/LICENSE
+	 * @return string
+	 */
+	protected function getZones() {
+		if ( empty( $this->zones ) ) {
+			$this->zones = file_get_contents( realpath( __DIR__ . '/../tz-map/windowsZones.xml' ) );
+		}
+
+		return $this->zones;
 	}
 
 	/**
