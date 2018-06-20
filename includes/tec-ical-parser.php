@@ -173,7 +173,7 @@ SG_iCal_VEvent Object
 				$args = array(
 					'post_title'         => $event->getProperty( 'summary' ),
 					'post_status'        => 'publish',
-					'post_content'       => $event->getProperty( 'description' ),
+					'post_content'       => (string) $event->getProperty( 'description' ),
 					'ical_uid'           => $event->getProperty( 'uid' ),
 					'ical_last_modified' => $last_modified,
 				        'ical_sequence'      => $event->getProperty( 'sequence' ),
