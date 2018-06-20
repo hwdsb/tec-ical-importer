@@ -21,7 +21,7 @@ class SG_iCal_Line implements ArrayAccess, Countable, IteratorAggregate {
 
 	protected $replacements = array('from'=>array('\\,', '\\n', '\\;', '\\:', '\\"'), 'to'=>array(',', "\n", ';', ':', '"'));
 
-	protected $zones = '';
+	protected static $zones = '';
 
 	/**
 	 * Constructs a new line.
@@ -82,7 +82,7 @@ class SG_iCal_Line implements ArrayAccess, Countable, IteratorAggregate {
 			if ( false !== strpos( $tzid, '(UTC)' ) ) {
 				$line = str_replace( ';' . $tzid, '', $line );
 
-			// This is a Microsoft timezone.
+			// Microsoft timezone starting with (UTC).
 			} elseif ( false !== strpos( $tzid, '(UTC' ) ) {
 				$offset_pos = strpos( $tzid, '(UTC' );
 				$offset = substr( $tzid, $offset_pos + 1 );
@@ -99,28 +99,27 @@ class SG_iCal_Line implements ArrayAccess, Countable, IteratorAggregate {
 				// Try to map Microsoft timezone to Olson timezone.
 				$tz = substr( $tzid, strpos( $tzid, '(' ) );
 				$tz = trim( $tz, '"' );
-				$findZone = strpos( $this->getZones(), $tz );
+				$findZone = self::matchOlsonTimezone( $tz );
 
-				// Fetch the first Olson timezone that matches a Microsoft timezone.
-				if ( false !== $findZone ) {
-					$findZoneStart = strpos( $this->zones, "\n", $findZone );
-					$findZoneEnd = strpos( $this->zones, "\n", $findZoneStart + 1 );
-					$map = substr( $this->zones, $findZoneStart, $findZoneEnd - $findZoneStart );
-					$map = substr( $map, strpos( $map, 'type=' ) + 6, -3 );
-				}
+			// Generic timezone without UTC offset - eg. Eastern Standard Time.
+			} elseif ( false !== strpos( $tzid, ' ' ) ) {
+				$findZone = self::matchOlsonTimezone( str_replace( 'TZID=', '', $tzid ) );
+				$time     = $parts[1];
+			}
 
-				// Success, we can use a valid timezone!
-				if ( ! empty( $map ) ) {
-					$d = new DateTime( $time, new DateTimeZone( $map ) );
+			// Success, we can use a valid timezone!
+			if ( ! empty( $findZone ) ) {
+				$d = new DateTime( $time, new DateTimeZone( $findZone ) );
 
-				// Use offset. This is not accurate for those that observe DST...
-				} else {
-					$offset = substr( $offset, 3 );
-					$offsettime = $time . $offset;
-					$d = new DateTime( $offsettime );
-				}
+			// Use offset. This is not accurate for those that observe DST...
+			} elseif ( ! empty( $offset ) ) {
+				$offset = substr( $offset, 3 );
+				$offsettime = $time . $offset;
+				$d = new DateTime( $offsettime );
+			}
 
-				// Standardize timezone to UTC.
+			// Standardize timezone to UTC.
+			if ( ! empty( $findZone ) || ! empty( $offset ) ) {
 				$d->setTimezone( new DateTimeZone( 'UTC' ) );
 
 				$line = str_replace( ';' . $tzid, '', $line );
@@ -128,6 +127,35 @@ class SG_iCal_Line implements ArrayAccess, Countable, IteratorAggregate {
 			}
 		}
 		return $line;
+	}
+
+	/**
+	 * Attempt to match a Microsoft timezone with an Olson timezone.
+	 *
+	 * For example, "Eastern Standard Time" will be matched with "America/Cancun".
+	 *
+	 * @since TEC-ICAL 0.1 This is a custom mod by HWDSB.
+	 *
+	 * @param  string $tz  Timezone to parse.
+	 * @return string|bool Olson timezone string on success, boolean false on failure.
+	 */
+	public static function matchOlsonTImezone( $tz = '' ) {
+		$zones    = self::getZones();
+		$findZone = strpos( $zones, $tz );
+
+		// Fetch the first Olson timezone that matches a Microsoft timezone.
+		if ( false !== $findZone ) {
+			$findZoneStart = strpos( $zones, "\n", $findZone );
+			$findZoneEnd = strpos( $zones, "\n", $findZoneStart + 1 );
+			$map = substr( $zones, $findZoneStart, $findZoneEnd - $findZoneStart );
+			$map = substr( $map, strpos( $map, 'type=' ) + 6, -3 );
+		}
+
+		if ( ! empty( $map ) ) {
+			return $map;
+		} else {
+			return false;
+		}
 	}
 
 	/**
@@ -139,12 +167,12 @@ class SG_iCal_Line implements ArrayAccess, Countable, IteratorAggregate {
 	 * @link   http://source.icu-project.org/repos/icu/trunk/icu4j/main/shared/licenses/LICENSE
 	 * @return string
 	 */
-	protected function getZones() {
-		if ( empty( $this->zones ) ) {
-			$this->zones = file_get_contents( realpath( __DIR__ . '/../tz-map/windowsZones.xml' ) );
+	protected static function getZones() {
+		if ( empty( self::$zones ) ) {
+			self::$zones = file_get_contents( realpath( __DIR__ . '/../tz-map/windowsZones.xml' ) );
 		}
 
-		return $this->zones;
+		return self::$zones;
 	}
 
 	/**
