@@ -127,7 +127,7 @@ class TEC_iCal_Admin {
 
 		// custom cron interval is valid and different than saved version
 		// reschedule event with new cron interval
-		} elseif ( $this->settings['custom-cron-interval'] != $input['custom-cron-interval'] ) {
+		} elseif ( ! empty( $input['custom-cron-interval'] ) && $this->settings['custom-cron-interval'] !== $input['custom-cron-interval'] ) {
 			$scheduled = wp_next_scheduled( 'tec_ical_schedule' );
 			if ( $scheduled ) {
 				wp_unschedule_event( $scheduled, 'tec_ical_schedule' );
