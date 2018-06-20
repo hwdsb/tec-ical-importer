@@ -166,9 +166,6 @@ SG_iCal_VEvent Object
 					$last_modified = '';
 				}
 
-				// get gmt offset
-				$gmt_offset = get_option( 'gmt_offset' );
-
 				// setup default args
 				$args = array(
 					'post_title'         => $event->getProperty( 'summary' ),
@@ -192,34 +189,8 @@ SG_iCal_VEvent Object
 					$args['recurrence'] = $this->get_recurrence_data( $event->recurrence );
 				}
 
-				// whole day event?
-				if ( $event->isWholeDay() ) {
-					$args['EventAllDay'] = 'yes';
-					$gmt_offset = 0;
-				}
-
-				// convert unix date to proper date with timezone factored in
-				$startdate = self::convert_unix_timestamp_to_date( $event->getProperty( 'start' ), $gmt_offset );
-
-				// for whole day events, iCal spec adds a day, but for The Events Calendar,
-				// we need the enddate to be the same as the startdate
-				if ( $event->isWholeDay() ) {
-					$enddate = $startdate;
-				} else {
-					$enddate = self::convert_unix_timestamp_to_date( $event->getProperty( 'end' ), $gmt_offset );
-				}
-
-				// save event date / time
-				$args['EventStartDate']     = Tribe__Date_Utils::date_only( $startdate );
-				$args['EventStartHour']     = Tribe__Date_Utils::hour_only( $startdate );
-				$args['EventStartMinute']   = Tribe__Date_Utils::minutes_only( $startdate );
-				$args['EventStartMeridian'] = Tribe__Date_Utils::meridian_only( $startdate );
-				$args['EventEndDate']       = Tribe__Date_Utils::date_only( $enddate );
-				$args['EventEndHour']       = Tribe__Date_Utils::hour_only( $enddate );
-				$args['EventEndMinute']     = Tribe__Date_Utils::minutes_only( $enddate );
-				$args['EventEndMeridian']   = Tribe__Date_Utils::meridian_only( $enddate );
-
 				// set event timezone
+				$date_convert_args = array();
 				$event_tz = $event->getProperty( 'tzid' );
 				if ( ! empty( $event_tz ) ) {
 					$event_tz = $this->validate_timezone( $event_tz );
@@ -231,6 +202,38 @@ SG_iCal_VEvent Object
 				if ( empty( $args['EventTimezone'] ) && ! empty( $timezone ) ) {
 					$args['EventTimezone'] = $timezone;
 				}
+				if ( ! empty( $args['EventTimeZone'] ) )  {
+					$date_convert_args['timezone'] = $args['EventTimeZone'];
+				} else {
+					$date_convert_args['offset'] = get_option( 'gmt_offset' );
+				}
+
+				// whole day event?
+				if ( $event->isWholeDay() ) {
+					$args['EventAllDay']         = 'yes';
+					$date_convert_args['offset'] = 0;
+				}
+
+				// convert unix date to proper date with timezone factored in
+				$startdate = self::convert_unix_timestamp_to_date( $event->getProperty( 'start' ), $date_convert_args );
+
+				// for whole day events, iCal spec adds a day, but for The Events Calendar,
+				// we need the enddate to be the same as the startdate
+				if ( $event->isWholeDay() ) {
+					$enddate = $startdate;
+				} else {
+					$enddate = self::convert_unix_timestamp_to_date( $event->getProperty( 'end' ), $date_convert_args );
+				}
+
+				// save event date / time
+				$args['EventStartDate']     = Tribe__Date_Utils::date_only( $startdate );
+				$args['EventStartHour']     = Tribe__Date_Utils::hour_only( $startdate );
+				$args['EventStartMinute']   = Tribe__Date_Utils::minutes_only( $startdate );
+				$args['EventStartMeridian'] = Tribe__Date_Utils::meridian_only( $startdate );
+				$args['EventEndDate']       = Tribe__Date_Utils::date_only( $enddate );
+				$args['EventEndHour']       = Tribe__Date_Utils::hour_only( $enddate );
+				$args['EventEndMinute']     = Tribe__Date_Utils::minutes_only( $enddate );
+				$args['EventEndMeridian']   = Tribe__Date_Utils::meridian_only( $enddate );
 
 				/** FOR LATER? **/
 				//$args['Venue'] = $event->getProperty( 'location' );
@@ -342,8 +345,10 @@ SG_iCal_VEvent Object
 			$rules['end-type'] = 'On';
 			$rules['end']      = self::convert_unix_timestamp_to_date(
 				strtotime( $event->getUntil() ),
-				0,
-				'Y-m-d'
+				array(
+					'offset' => 0,
+					'format' => 'Y-m-d'
+				)
 			);
 
 		// event is infinite
@@ -636,16 +641,37 @@ SG_iCal_VEvent Object
 	}
 
 	/**
-	 * Converts a unix timestamp to a formatted date.  Accepts GMT offset.
+	 * Converts a unix timestamp to a formatted date.
 	 *
-	 * @param int $unix_timestamp The unix timestamp
+	 * @param int   $unix_timestamp The unix timestamp
+	 * @param array $args {
+	 *     An array of arguments. All items are optional.
+	 *     @type string $offset   A string ranging from '-12' to '+12' denoting the hourly offset. Default: 0.
+	 *     @type string $timezone Olson timezone.  For example, 'America/Toronto' is a valid timezone.
+	 *     @type string $format   Date format.  Same as used in date(). Default: 'c'.
+	 * }
 	 * @param string $gmt_offset A string ranging from '-12' to '+12' denoting the hourly offset.
 	 * @param string $format The date format. See first parameter of {@link date()}.
 	 * @return string The formatted date as a string.
 	 */
-	public static function convert_unix_timestamp_to_date( $unix_timestamp, $gmt_offset = '0' , $format = 'c' ) {
-		$date = new DateTime( date( $format, $unix_timestamp ), new DateTimeZone( 'UTC' ) );
-		$date->modify( $gmt_offset . ' hours' );
-		return $date->format( $format );
+	public static function convert_unix_timestamp_to_date( $unix_timestamp, $args = array() ) {
+		$args = array_merge( array(
+			'offset' => 0,
+			'format' => 'c',
+		), $args );
+
+		$date = new DateTime( date( $args['format'], $unix_timestamp ), new DateTimeZone( 'UTC' ) );
+
+		// Use offset if passed.
+		if ( isset( $args['offset'] ) ) {
+			$date->modify( $args['offset'] . ' hours' );
+
+		// Use timezone if passed. Must be valid Olson timezone.
+		} elseif ( isset( $args['timezone'] ) ) {
+			$timezone = new DateTimeZone( $args['timezone'] );
+			$date->setTimezone( $timezone );
+		}
+
+		return $date->format( $args['format'] );
 	}
 }
