@@ -140,12 +140,20 @@ class SG_iCal_Line implements ArrayAccess, Countable, IteratorAggregate {
 	 * @return string|bool Olson timezone string on success, boolean false on failure.
 	 */
 	public static function matchOlsonTImezone( $tz = '' ) {
-		$zones    = self::getZones();
-		$findZone = strpos( $zones, $tz );
+		$zones = self::getZones();
+
+		// Timezone begins with (UTC)
+		if ( false !== strpos( $tz, '(UTC' ) ) {
+			$findZone      = strpos( $zones, $tz );
+			$findZoneStart = strpos( $zones, "\n", $findZone );
+
+		// Generic timezone (eg. Eastern Standard Time)
+		} else {
+			$findZone = $findZoneStart = strpos( $zones, $tz . '"' );
+		}
 
 		// Fetch the first Olson timezone that matches a Microsoft timezone.
 		if ( false !== $findZone ) {
-			$findZoneStart = strpos( $zones, "\n", $findZone );
 			$findZoneEnd = strpos( $zones, "\n", $findZoneStart + 1 );
 			$map = substr( $zones, $findZoneStart, $findZoneEnd - $findZoneStart );
 			$map = substr( $map, strpos( $map, 'type=' ) + 6, -3 );
