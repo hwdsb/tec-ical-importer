@@ -132,7 +132,9 @@ class SG_iCal_Line implements ArrayAccess, Countable, IteratorAggregate {
 	/**
 	 * Attempt to match a Microsoft timezone with an Olson timezone.
 	 *
-	 * For example, "Eastern Standard Time" will be matched with "America/Cancun".
+	 * For example:
+	 *  - "Eastern Standard Time" will be matched with "America/New_York".
+	 *  - "(UTC-05:00) Eastern Time (US & Canada)" will be matched with "America/New_York".
 	 *
 	 * @since TEC-ICAL 0.1 This is a custom mod by HWDSB.
 	 *
