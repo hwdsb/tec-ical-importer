@@ -56,9 +56,9 @@ class TEC_iCal_Parser {
 			return;
 		}
 
-		// require SG_iCalendar parser library
-		if ( ! class_exists( 'SG_iCalReader' ) ) {
-			require TEC_iCal::$plugin_dir . '/includes/SG-iCalendar/SG_iCal.php';
+		// require ics parser library
+		if ( ! class_exists( 'ICal\ICal' ) ) {
+			require_once TEC_iCal::$plugin_dir . '/vendor/autoload.php';
 		}
 
 		// add hook to update custom event meta
@@ -77,20 +77,33 @@ class TEC_iCal_Parser {
 			}
 
 			// parse the actual iCalendar
-			$parser = new SG_iCalReader( $ical['link'] );
+			try {
+				$parser = new ICal\ICal(
+					$ical['link'],
+					[
+						'httpUserAgent'  => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36',
+						'skipRecurrence' => true
+					]
+				);
+
+			} catch ( \Exception $e ) {
+				die( $e );
+			}
 
 			$updated_count = 0;
 			$added_count   = 0;
 
 			$uids = array();
 
-			$timezone = '';
-			if ( ! empty( $parser->timezones ) ) {
-				$timezone = $this->validate_timezone( $parser->timezones[0]->getTimeZoneId() );
+			$timezone = $parser->calendarTimeZone();
+			if ( ! empty( $timezone ) ) {
+				$timezone = $this->validate_timezone( $timezone );
+			} else {
+				$timezone = '';
 			}
 
 			// parse each iCalendar event
-			foreach ( (array) $parser->getEvents() as $event ) {
+			foreach ( (array) $parser->events() as $event ) {
 /* Sample event data
 SG_iCal_VEvent Object
 (
@@ -158,40 +171,43 @@ SG_iCal_VEvent Object
 */
 
 				// record the UID for later use
-				$uids[] = $event->getProperty( 'uid' );
+				$uids[] = $event->uid;
 
 				// last modified
-				$last_modified = $event->getProperty( 'last-modified' );
+				$last_modified = $event->last_modified;
 				if ( empty( $last_modified ) ) {
 					$last_modified = '';
 				}
 
 				// setup default args
 				$args = array(
-					'post_title'         => $event->getProperty( 'summary' ),
+					'post_title'         => $event->summary,
 					'post_status'        => 'publish',
-					'post_content'       => (string) $event->getProperty( 'description' ),
-					'ical_uid'           => $event->getProperty( 'uid' ),
+					'post_content'       => (string) $event->description,
+					'ical_uid'           => $event->uid,
 					'ical_last_modified' => $last_modified,
-				        'ical_sequence'      => $event->getProperty( 'sequence' ),
+				        'ical_sequence'      => $event->sequence,
 				        'ical_link'          => $ical['link'],
 
 					// saving for posterity's sake; these are unix timestamps
-				        'ical_start_timestamp' => $event->getProperty( 'start' ),
-				        'ical_end_timestamp'   => $event->getProperty( 'end' ),
+				        'ical_start_timestamp' => $event->dtstart_array[2],
+				        'ical_end_timestamp'   => $event->dtend_array[2],
 
 					// default to show in calendar
 					'EventShowInCalendar'  => 1
 				);
 
 				// recurrence - for PRO version only
-				if ( class_exists( 'Tribe__Events__Pro__Main' ) && ! empty( $event->recurrence ) ) {
-					$args['recurrence'] = $this->get_recurrence_data( $event->recurrence );
+				if ( class_exists( 'Tribe__Events__Pro__Main' ) ) {
+					$rrule = $event->rrule;
+					if ( ! empty( $rrule ) ) {
+						$args['recurrence'] = $this->get_recurrence_data( $rrule );
+					}
 				}
 
 				// set event timezone
 				$date_convert_args = array();
-				$event_tz = $event->getProperty( 'tzid' );
+				$event_tz = $event->tzid;
 				if ( ! empty( $event_tz ) ) {
 					$event_tz = $this->validate_timezone( $event_tz );
 
@@ -209,20 +225,20 @@ SG_iCal_VEvent Object
 				}
 
 				// whole day event?
-				if ( $event->isWholeDay() ) {
+				if ( $this->isWholeDay( $event ) ) {
 					$args['EventAllDay']         = 'yes';
 					$date_convert_args['offset'] = 0;
 				}
 
 				// convert unix date to proper date with timezone factored in
-				$startdate = self::convert_unix_timestamp_to_date( $event->getProperty( 'start' ), $date_convert_args );
+				$startdate = self::convert_unix_timestamp_to_date( $args['ical_start_timestamp'], $date_convert_args );
 
 				// for whole day events, iCal spec adds a day, but for The Events Calendar,
 				// we need the enddate to be the same as the startdate
-				if ( $event->isWholeDay() ) {
+				if ( $this->isWholeDay( $event ) ) {
 					$enddate = $startdate;
 				} else {
-					$enddate = self::convert_unix_timestamp_to_date( $event->getProperty( 'end' ), $date_convert_args );
+					$enddate = self::convert_unix_timestamp_to_date( $args['ical_end_timestamp'], $date_convert_args );
 				}
 
 				// save event date / time
@@ -252,7 +268,7 @@ SG_iCal_VEvent Object
 				$existing_event = new WP_Query( array(
 					'post_type'  => Tribe__Events__Main::POSTTYPE,
 					'meta_key'   => '_tec_ical_uid',
-					'meta_value' => $event->getProperty( 'uid' ),
+					'meta_value' => $event->uid,
 
 					// decreases the complexity of the SQL query; good for performance
 					'nopaging'   => true,
@@ -324,32 +340,29 @@ SG_iCal_VEvent Object
 	/**
 	 * Match iCal recurrence data to Event Calendar PRO's version of recurrence.
 	 *
-	 * @param SG_iCal_Recurrence $event
+	 * @param  string $rrule Event's RRULE string from iCalendar.
 	 * @return array
 	 */
-	protected function get_recurrence_data( $event ) {
+	protected function get_recurrence_data( $rrule ) {
 		$data = array();
 		$rules = array();
 
-		// interval
-		$interval = $event->getInterval() ? (int) $event->getInterval() : 1;
+		$rrule = $this->parse_rrule( $rrule );
 
-		// occurences
-		if ( $event->getCount() ) {
-			$rules['end-count'] = $event->getCount();
+		// interval
+		$interval = ! empty( $rrule['INTERVAL'] ) ? (int) $rrule['INTERVAL'] : 1;
+
+		// occurrences
+		if ( ! empty( $rrule['COUNT'] ) ) {
+			$rules['end-count'] = $rrule['COUNT'];
 			$rules['end-type']  = 'After';
 
 		// until
 		// @todo this needs testing
-		} elseif ( $event->getUntil() ) {
+		} elseif ( ! empty( $rrule['UNTIL'] ) ) {
+			$until = new DateTime( $rrule['UNTIL'] );
 			$rules['end-type'] = 'On';
-			$rules['end']      = self::convert_unix_timestamp_to_date(
-				strtotime( $event->getUntil() ),
-				array(
-					'offset' => 0,
-					'format' => 'Y-m-d'
-				)
-			);
+			$rules['end']      = $until->format( 'Y-m-d' );
 
 		// event is infinite
 		} else {
@@ -358,131 +371,104 @@ SG_iCal_VEvent Object
 
 		// get by___ properties
 		$eventby = array();
-		$eventbyprops = array(
-			'GetByDay', 'GetByMonthDay', 'GetByYearDay', 'GetByWeekNo', 'GetByMonth', 'GetBySetPos'
-		);
-		foreach ( $eventbyprops as $prop ) {
-			if ( $event->$prop() ) {
-				// stupid SG-iCalendar...
-				$key = strtolower( str_replace( 'Get', '', $prop ) );
-
-				$eventby[$key] = $event->$prop();
+		foreach ( $rrule as $key => $val ) {
+			if ( 'BY' == substr( $key, 0, 2 ) ) {
+				$eventby[$key] = explode( ',', $val );
 			}
 		}
-
-		// simple recurring event
-		if( 1 === $interval && empty( $eventby ) ) {
-			// set type
-			switch( strtolower( $event->getFreq() ) ) {
-				case 'daily' :
-					$type = 'Every Day';
-					break;
-
-				case 'weekly' :
-					$type = 'Every Week';
-					break;
-
-				case 'monthly' :
-					$type = 'Every Month';
-					break;
-
-				case 'yearly' :
-					$type = 'Every Year';
-					break;
-			}
-
-			$rules['type'] = $type;
 
 		// custom recurring event
 		//
 		// Events Calendar PRO doesn't support crazy, advanced recurring events
 		// View latter examples @ http://www.kanzaki.com/docs/ical/rrule.html#example
-		} else {
-			$rules['type'] = 'Custom';
-			$rules['custom'] = array();
-			$rules['custom']['type'] = ucfirst( strtolower( $event->getFreq() ) );
-			$rules['custom']['interval'] = $interval;
+		$rules['type'] = 'Custom';
+		$rules['custom'] = array();
+		$rules['custom']['type'] = ucfirst( strtolower( $rrule['FREQ'] ) );
+		$rules['custom']['interval'] = $interval;
 
-			// TEC needs the number to be a string... wasted an hour here
-			$this->day_to_number = array(
-				'MO' => '1',
-				'TU' => '2',
-				'WE' => '3',
-				'TH' => '4',
-				'FR' => '5',
-				'SA' => '6',
-				'SU' => '7'
-			);
+		// TEC needs the number to be a string... wasted an hour here
+		$this->day_to_number = array(
+			'MO' => '1',
+			'TU' => '2',
+			'WE' => '3',
+			'TH' => '4',
+			'FR' => '5',
+			'SA' => '6',
+			'SU' => '7'
+		);
 
-			// grab event BY___ properties
-			switch( strtolower( $event->getFreq() ) ) {
-				case 'weekly' :
-					if ( ! empty( $eventby['byday'] ) ) {
-						$rules['custom']['week'] = array();
-						$rules['custom']['week']['same-time'] = 'yes';
+		// grab event BY___ properties
+		switch( strtolower( $rrule['FREQ'] ) ) {
+			case 'daily' :
+				$rules['custom']['same-time'] = 'yes';
+				break;
 
-						foreach( $eventby['byday'] as $eday ) {
-							if ( isset( $this->day_to_number[$eday] ) ) {
-								$rules['custom']['week']['day'][] = $this->day_to_number[$eday];
-							}
+			case 'weekly' :
+				if ( ! empty( $eventby['BYDAY'] ) ) {
+					$rules['custom']['week'] = array();
+					$rules['custom']['week']['same-time'] = 'yes';
+
+					foreach( $eventby['BYDAY'] as $eday ) {
+						if ( isset( $this->day_to_number[$eday] ) ) {
+							$rules['custom']['week']['day'][] = $this->day_to_number[$eday];
 						}
 					}
-					break;
+				}
+				break;
 
-				case 'monthly' :
-					if ( ! empty( $eventby['bymonthday'] ) ) {
-						$rules['custom']['month'] = array();
-						$rules['custom']['month']['same-time'] = 'yes';
-
-						// EVP only supports one condition and not multiple
-						// so we only grab the first condition...
-						$monthday = $eventby['bymonthday'][0];
-
-						// the last nth day of the month
-						// EVP supports the last day only; it doesn't values less than -1, so we only
-						// check for the last day...
-						if( '-' == substr( $monthday, 0, 1 ) && 1 == substr( $monthday, 1 ) && 2 == strlen( $monthday ) ) {
-							$rules['custom']['month']['number'] = 'Last';
-							$rules['custom']['month']['day']    = -1;
-
-						// the first day of the month
-						} elseif ( 1 == strlen( $monthday ) && 1 == $monthday ) {
-							$rules['custom']['month']['number'] = 'First';
-							$rules['custom']['month']['day']    = -1;
-
-						// the nth day of the month
-						} else {
-							$rules['custom']['month']['number'] = $monthday;
-						}
-
+			case 'monthly' :
+				if ( ! empty( $eventby['BYMONTHDAY'] ) ) {
+					$rules['custom']['month'] = array();
+					$rules['custom']['month']['same-time'] = 'yes';
 
 					// EVP only supports one condition and not multiple
 					// so we only grab the first condition...
-					} elseif ( ! empty( $eventby['byday'] ) ) {
-						$day = $this->get_recurrence_by_day_data( $eventby['byday'][0] );
+					$monthday = $eventby['BYMONTHDAY'][0];
 
-						if ( ! empty( $day ) ) {
-							$rules = array_merge( $rules, $day );
-						}
+					// the last nth day of the month
+					// EVP supports the last day only; it doesn't values less than -1, so we only
+					// check for the last day...
+					if( '-' == substr( $monthday, 0, 1 ) && 1 == substr( $monthday, 1 ) && 2 == strlen( $monthday ) ) {
+						$rules['custom']['month']['number'] = 'Last';
+						$rules['custom']['month']['day']    = -1;
+
+					// the first day of the month
+					} elseif ( 1 == strlen( $monthday ) && 1 == $monthday ) {
+						$rules['custom']['month']['number'] = 'First';
+						$rules['custom']['month']['day']    = -1;
+
+					// the nth day of the month
+					} else {
+						$rules['custom']['month']['number'] = $monthday;
 					}
-					break;
 
-				case 'yearly' :
-					if ( ! empty( $eventby['bymonth'] ) ) {
-						$rules['custom-year-month'] = $eventby['bymonth'];
+
+				// EVP only supports one condition and not multiple
+				// so we only grab the first condition...
+				} elseif ( ! empty( $eventby['BYDAY'] ) ) {
+					$day = $this->get_recurrence_by_day_data( $eventby['BYDAY'][0] );
+
+					if ( ! empty( $day ) ) {
+						$rules = array_merge( $rules, $day );
 					}
+				}
+				break;
 
-					if ( ! empty( $eventby['byday'] ) ) {
-						// EVP only supports one condition and not multiple
-						// so we only grab the first condition...
-						$day = $this->get_recurrence_by_day_data( $eventby['byday'][0], 'year' );
+			case 'yearly' :
+				if ( ! empty( $eventby['BYMONTH'] ) ) {
+					$rules['custom-year-month'] = $eventby['BYMONTH'];
+				}
 
-						if ( ! empty( $day ) ) {
-							$rules = array_merge( $rules, $day );
-						}
+				if ( ! empty( $eventby['BYDAY'] ) ) {
+					// EVP only supports one condition and not multiple
+					// so we only grab the first condition...
+					$day = $this->get_recurrence_by_day_data( $eventby['BYDAY'][0], 'year' );
+
+					if ( ! empty( $day ) ) {
+						$rules = array_merge( $rules, $day );
 					}
-					break;
-			}
+				}
+				break;
 		}
 
 		$data['rules'][] = $rules;
@@ -673,5 +659,39 @@ SG_iCal_VEvent Object
 		}
 
 		return $date->format( $args['format'] );
+	}
+
+	/**
+	 * Check if event occurs for the whole day.
+	 *
+	 * @param  object $event Event data.
+	 * @return bool
+	 */
+	public function isWholeDay( $event ) {
+		// Outlook iCal has a handy header, so check for that.
+		$microsoft_header = $event->x_microsoft_cdo_alldayevent;
+		if ( ! empty( $microsoft_header ) ) {
+			return true;
+		}
+
+		// Check by duration. Logic taken from SG_iCalendar.
+		$dur = $event->dtend_array[2] - $event->dtstart_array[2];
+		if ( $dur > 0 && ( $dur % 86400 ) == 0 ) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Parse an event's 'RRULE' header to an array.
+	 *
+	 * @param  string $rrule RRULE string
+	 * @return array
+	 */
+	public function parse_rrule( $rrule = '' ) {
+		$rrule = str_replace( ';', '&', $rrule );
+		parse_str( $rrule, $rrule);
+		return $rrule;
 	}
 }
