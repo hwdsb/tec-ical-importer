@@ -669,7 +669,7 @@ SG_iCal_VEvent Object
 	 */
 	public function isWholeDay( $event ) {
 		// Outlook iCal has a handy header, so check for that.
-		$microsoft_header = $event->x_microsoft_cdo_alldayevent;
+		$microsoft_header = filter_var( $event->x_microsoft_cdo_alldayevent, FILTER_VALIDATE_BOOLEAN );
 		if ( ! empty( $microsoft_header ) ) {
 			return true;
 		}
