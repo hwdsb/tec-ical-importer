@@ -89,7 +89,7 @@ class TEC_iCal_Parser {
 			} catch ( \Exception $e ) {
 				die( $e );
 			}
-
+//var_dump( $parser->events() ); die();
 			$updated_count = 0;
 			$added_count   = 0;
 
@@ -104,72 +104,6 @@ class TEC_iCal_Parser {
 
 			// parse each iCalendar event
 			foreach ( (array) $parser->events() as $event ) {
-/* Sample event data
-SG_iCal_VEvent Object
-(
-    [uid:protected] => t7m727q9g0gkqtp7md1jh58g2g@google.com
-    [start:protected] => 1408645800
-    [end:protected] => 1408649400
-    [summary:protected] => Recurring Event
-    [description:protected] => Recurring every Thursday.
-    [location:protected] =>
-    [laststart:protected] => 1502994991
-    [lastend:protected] => 1502998591
-    [recurrence] => SG_iCal_Recurrence Object
-        (
-            [rrule] => FREQ=WEEKLY;BYDAY=TH
-            [freq:protected] => WEEKLY
-            [until:protected] => 20170817T113631-0700
-            [count:protected] =>
-            [interval:protected] =>
-            [bysecond:protected] =>
-            [byminute:protected] =>
-            [byhour:protected] =>
-            [byday:protected] => Array
-                (
-                    [0] => TH
-                )
-
-            [bymonthday:protected] =>
-            [byyearday:protected] =>
-            [byweekno:protected] =>
-            [bymonth:protected] =>
-            [bysetpos:protected] =>
-            [wkst:protected] =>
-            [listProperties:protected] => Array
-                (
-                    [0] => bysecond
-                    [1] => byminute
-                    [2] => byhour
-                    [3] => byday
-                    [4] => bymonthday
-                    [5] => byyearday
-                    [6] => byweekno
-                    [7] => bymonth
-                    [8] => bysetpos
-                )
-
-        )
-
-    [recurex] =>
-    [excluded] =>
-    [added] =>
-    [freq] =>
-    [data] => Array
-        (
-            [dtstamp] => 20140817T183555Z
-            [created] => 20140817T183037Z
-            [last-modified] => 20140817T183037Z
-            [sequence] => 0
-            [status] => CONFIRMED
-            [transp] => OPAQUE
-        )
-
-    [previous_tz] => UTC
-    [tzid] => America/Vancouver
-)
-*/
-
 				// record the UID for later use
 				$uids[] = $event->uid;
 
