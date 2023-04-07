@@ -3,12 +3,14 @@ The Events Calendar - iCalendar Importer
 
 This plugin allows site administrators to enter remotely-located iCalendar files to be synched and imported into [The Events Calendar](http://wordpress.org/plugins/the-events-calendar/) plugin for [WordPress](http://wordpress.org).
 
-Tested with The Events Calendar 4.6.13 and The Events Calendar PRO 4.4.24.2.
+Tested with The Events Calendar 6.0.11 and The Events Calendar PRO 6.0.9.2.
 
 How to use?
 -
 * Make sure The Events Calendar is already installed and activated.
-* Download, install and activate this plugin.
+* Download the plugin.
+* Run `composer install` in the same directory where you installed the plugin.
+* Next, activate and install this plugin.
 * In the WP admin dashboard under "Settings > General", make sure you have selected the timezone that is reflective of your install.
 * In the WP admin dashboard, navigate to the "Events > iCal Import" page.
 * Next, enter in the location of your iCalendar files.
@@ -18,12 +20,9 @@ How to use?
 
 Thanks
 -
-* SG-iCalendar - A simple and fast iCal parser.  Currently using [lipemat's fork](https://github.com/lipemat/SG-iCalendar).  Original is by [fangal](https://github.com/fangel/SG-iCalendar).  Licensed under the [Creative Commons Attribution-ShareAlike 2.5 (Denmark)](https://creativecommons.org/licenses/by-sa/2.5/dk/deed.en).
-* [Unicode CLDR](http://cldr.unicode.org/index) - For their [Windows timezones XML file](https://unicode.org/cldr/trac/browser/trunk/common/supplemental/windowsZones.xml). Licensed under the [ICU](http://source.icu-project.org/repos/icu/trunk/icu4j/main/shared/licenses/LICENSE).
+* [PHP ICS Parser](https://github.com/u01jmg3/ics-parser) - Parser for iCalendar Events.  Licensed under the [MIT](https://github.com/u01jmg3/ics-parser/blob/master/LICENSE).
 
 
 License
 -
-[Creative Commons Attribution-ShareAlike 2.5 (Denmark)](https://creativecommons.org/licenses/by-sa/2.5/dk/deed.en).
-
-<sub>*Since SG-iCalendar's license is CC BY-SA, this plugin must also follow this license.  Therefore, this plugin is [incompatible with the GPL](https://www.gnu.org/licenses/license-list.html#ccbysa).</sub>
+GPL v2 or later
