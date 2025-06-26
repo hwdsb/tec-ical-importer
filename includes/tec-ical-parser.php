@@ -120,12 +120,12 @@ class TEC_iCal_Parser {
 					'post_content'       => (string) $event->description,
 					'ical_uid'           => $event->uid,
 					'ical_last_modified' => $last_modified,
-				        'ical_sequence'      => $event->sequence,
-				        'ical_link'          => $ical['link'],
+					'ical_sequence'      => $event->sequence,
+					'ical_link'          => $ical['link'],
 
 					// saving for posterity's sake; these are unix timestamps
-				        'ical_start_timestamp' => $event->dtstart_array[2],
-				        'ical_end_timestamp'   => $event->dtend_array[2],
+					'ical_start_timestamp' => $event->dtstart_array[2],
+					'ical_end_timestamp'   => $event->dtend_array[2],
 
 					// default to show in calendar
 					'EventShowInCalendar'  => 1
