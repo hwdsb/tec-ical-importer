@@ -108,10 +108,7 @@ class TEC_iCal_Parser {
 				$uids[] = $event->uid;
 
 				// last modified
-				$last_modified = $event->last_modified;
-				if ( empty( $last_modified ) ) {
-					$last_modified = '';
-				}
+				$last_modified = $this->get_last_modified( $event );
 
 				// setup default args
 				$args = array(
@@ -627,5 +624,42 @@ class TEC_iCal_Parser {
 		$rrule = str_replace( ';', '&', $rrule );
 		parse_str( $rrule, $rrule);
 		return $rrule;
+	}
+
+	/**
+	 * Returns last modified data for an event.
+	 *
+	 * If the event's last-modified data exists, it will return the value:
+	 *
+	 *  date"T"time
+	 *
+	 * For example:
+	 *  19980119T070000Z
+	 *
+	 * More info can be found at:
+	 * https://www.kanzaki.com/docs/ical/dateTime.html
+	 *
+	 * When the event's last modified data does not exist, we create a md5 hash
+	 * based off the event data.
+	 *
+	 * @param  ICal\Event $event Event data
+	 * @return string Either the last modified timestamp or a hash of the event data.
+	 */
+	public function get_last_modified( $event ) {
+		$last_modified = $event->last_modified;
+
+		// No last modified timestamp, so create a hash based off the event data.
+		if ( empty( $last_modified ) ) {
+			// Get only the accessible properties for the event.
+			$event = get_object_vars( $event );
+
+			// Remove the 'dtstamp' as this can vary and be different on each parse.
+			unset( $event['dtstamp'] );
+
+			// Create the hash.
+			$last_modified = md5( serialize( $event ) );
+		}
+
+		return $last_modified;
 	}
 }
